@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,14 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Store, UserCheck, ShieldCheck } from 'lucide-react-native';
+import { Store, Wifi, WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
+import { apiClient, API_URL } from '../../src/api/client';
 import { Colors, Spacing } from '../../src/theme/colors';
 import { Card } from '../../src/components/Card';
 import { Input } from '../../src/components/Input';
@@ -26,6 +28,31 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Connection check state
+  const [serverStatus, setServerStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+  const [serverMessage, setServerMessage] = useState('');
+
+  const checkConnection = async () => {
+    try {
+      setServerStatus('checking');
+      const res = await apiClient.get('/health');
+      if (res.data?.status === 'ok') {
+        setServerStatus('connected');
+        setServerMessage(`Connected to ${API_URL}`);
+      } else {
+        setServerStatus('disconnected');
+        setServerMessage('Unexpected server response.');
+      }
+    } catch (err: any) {
+      setServerStatus('disconnected');
+      setServerMessage(err.message || `Cannot connect to ${API_URL}`);
+    }
+  };
+
+  useEffect(() => {
+    checkConnection();
+  }, []);
+
   const handleLogin = async () => {
     if (!identifier.trim() || !password.trim()) {
       setError('Please enter your username and password.');
@@ -38,7 +65,7 @@ export default function LoginScreen() {
       await login(identifier.trim(), password);
       router.replace('/(tabs)');
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check credentials.');
+      setError(err.message || 'Login failed. Please check credentials or connection.');
     } finally {
       setLoading(false);
     }
@@ -72,6 +99,38 @@ export default function LoginScreen() {
               Family Grocery Store Inventory & Dual-Pricing System
             </Text>
           </View>
+
+          {/* Connection Status Badge */}
+          <TouchableOpacity
+            style={[
+              styles.connectionBadge,
+              serverStatus === 'connected' && styles.connConnected,
+              serverStatus === 'disconnected' && styles.connDisconnected,
+            ]}
+            onPress={checkConnection}
+          >
+            {serverStatus === 'checking' ? (
+              <ActivityIndicator size="small" color={Colors.darkForest} />
+            ) : serverStatus === 'connected' ? (
+              <CheckCircle2 size={16} color={Colors.success} />
+            ) : (
+              <WifiOff size={16} color={Colors.error} />
+            )}
+            <Text
+              style={[
+                styles.connText,
+                serverStatus === 'connected' && { color: Colors.success },
+                serverStatus === 'disconnected' && { color: Colors.error },
+              ]}
+              numberOfLines={1}
+            >
+              {serverStatus === 'checking'
+                ? 'Testing connection to server...'
+                : serverStatus === 'connected'
+                ? `Server Online (${API_URL})`
+                : `Offline: ${serverMessage} (Tap to retry)`}
+            </Text>
+          </TouchableOpacity>
 
           {/* Login Form Card */}
           <Card style={styles.formCard}>
@@ -127,7 +186,7 @@ export default function LoginScreen() {
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              🔒 Secure multi-device store synchronization via Node & MongoDB Atlas
+              🔒 Multi-device store synchronization via Node & MongoDB Atlas
             </Text>
           </View>
         </ScrollView>
@@ -151,16 +210,16 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -168,7 +227,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   appName: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
     color: Colors.darkForest,
     letterSpacing: -0.5,
@@ -179,6 +238,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     maxWidth: 280,
+  },
+  connectionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.borders,
+    marginBottom: Spacing.md,
+    gap: 6,
+  },
+  connConnected: {
+    backgroundColor: '#E7F7ED',
+    borderColor: '#C6EAD1',
+  },
+  connDisconnected: {
+    backgroundColor: '#FDEAEB',
+    borderColor: '#F8BFC2',
+  },
+  connText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.darkForest,
   },
   formCard: {
     padding: Spacing.xl,
