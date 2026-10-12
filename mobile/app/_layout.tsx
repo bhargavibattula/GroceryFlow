@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
+import { LanguageProvider } from '../src/context/LanguageContext';
 import { Colors } from '../src/theme/colors';
 
 const queryClient = new QueryClient({
@@ -20,10 +21,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <CartProvider>
-            <StatusBar style="dark" />
-            <Stack
+        <LanguageProvider>
+          <AuthProvider>
+            <CartProvider>
+              <StatusBar style="dark" />
+              <Stack
               screenOptions={{
                 headerStyle: { backgroundColor: Colors.white },
                 headerTintColor: Colors.darkForest,
@@ -86,8 +88,9 @@ export default function RootLayout() {
                 options={{ title: 'Suppliers Directory', headerBackTitle: 'Back' }}
               />
             </Stack>
-          </CartProvider>
-        </AuthProvider>
+            </CartProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

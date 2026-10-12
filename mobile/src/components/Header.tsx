@@ -1,33 +1,75 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Store, ShoppingBag, Globe } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { Colors, Spacing } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
-import { Badge } from './Badge';
+import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeaderProps {
-  title: string;
+  title?: string;
   subtitle?: string;
+  showLanguageToggle?: boolean;
   rightAction?: React.ReactNode;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, subtitle, rightAction }) => {
+export const Header: React.FC<HeaderProps> = ({
+  title,
+  subtitle,
+  showLanguageToggle = true,
+  rightAction,
+}) => {
+  const router = useRouter();
   const { user, isOwner } = useAuth();
+  const { itemCount } = useCart();
+  const { language, toggleLanguage, t } = useLanguage();
 
   return (
     <View style={styles.container}>
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <View style={styles.leftRow}>
+        <View style={styles.avatarCircle}>
+          <Store size={20} color={Colors.white} />
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={styles.title} numberOfLines={1}>
+            {title || t('storeName')}
+          </Text>
+          <Text style={styles.subtitle} numberOfLines={1}>
+            {subtitle || (isOwner ? t('ownerBadge') : t('salesBadge'))}
+          </Text>
+        </View>
       </View>
-      <View style={styles.rightContainer}>
-        {rightAction ? (
-          rightAction
-        ) : user ? (
-          <Badge
-            label={isOwner ? '👑 Owner' : '🛒 Sales'}
-            variant={isOwner ? 'reseller' : 'retail'}
-          />
-        ) : null}
+
+      <View style={styles.rightActionsRow}>
+        {/* Instant Telugu / English Switcher */}
+        {showLanguageToggle && (
+          <TouchableOpacity
+            style={styles.langToggleBtn}
+            onPress={toggleLanguage}
+            activeOpacity={0.7}
+          >
+            <Globe size={14} color={Colors.darkForest} />
+            <Text style={styles.langText}>
+              {language === 'te' ? 'తెలుగు' : 'EN'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Shopping bag with badge */}
+        <TouchableOpacity
+          style={styles.cartIconBtn}
+          onPress={() => router.push('/sell/cart')}
+        >
+          <ShoppingBag size={20} color={Colors.darkForest} />
+          {itemCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{itemCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {rightAction}
       </View>
     </View>
   );
@@ -39,23 +81,89 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.sm,
+    backgroundColor: Colors.mintBackground,
+  },
+  leftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
     color: Colors.darkForest,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.secondaryText,
-    marginTop: 2,
+    marginTop: 1,
   },
-  rightContainer: {
-    marginLeft: Spacing.md,
+  rightActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  langToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.borders,
+    gap: 4,
+  },
+  langText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.darkForest,
+  },
+  cartIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.borders,
+    position: 'relative',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    backgroundColor: '#FF5757',
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    color: Colors.white,
+    fontSize: 10,
+    fontWeight: '800',
   },
 });

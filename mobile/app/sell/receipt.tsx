@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Share2, Printer, PlusCircle, ArrowLeft } from 'lucide-react-native';
 import { apiClient } from '../../src/api/client';
+import { useLanguage } from '../../src/context/LanguageContext';
 import { Colors, Spacing } from '../../src/theme/colors';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
@@ -22,6 +23,7 @@ import { formatCurrency, formatDate } from '../../src/utils/format';
 export default function ReceiptScreen() {
   const router = useRouter();
   const { saleId } = useLocalSearchParams<{ saleId: string }>();
+  const { language, t } = useLanguage();
 
   const { data: sale, isLoading } = useQuery({
     queryKey: ['sale-receipt', saleId],
@@ -35,7 +37,7 @@ export default function ReceiptScreen() {
   const handleShare = async () => {
     if (!sale) return;
     try {
-      const text = `FreshStock Receipt #${sale.saleNumber}\nCustomer: ${sale.customerName}\nTotal: ₹${sale.total.toFixed(2)}\nItems: ${sale.lineItems.length}\nPayment: ${sale.paymentDetails?.method || 'CASH'}`;
+      const text = `${t('appName')} Bill #${sale.saleNumber}\nCustomer: ${sale.customerName}\nTotal: ₹${sale.total.toFixed(2)}\nItems: ${sale.lineItems.length}\nPayment: ${sale.paymentDetails?.method || 'CASH'}`;
       await Share.share({ message: text });
     } catch (e: any) {
       Alert.alert('Share Failed', e.message);
@@ -43,14 +45,21 @@ export default function ReceiptScreen() {
   };
 
   const handlePrint = () => {
-    Alert.alert('Print Receipt', `Connecting to Bluetooth POS thermal printer for #${sale?.saleNumber}...`);
+    Alert.alert(
+      t('printReceipt'),
+      language === 'te'
+        ? `బ్లూటూత్ థర్మల్ ప్రింటర్‌కి కనెక్ట్ అవుతోంది #${sale?.saleNumber}...`
+        : `Connecting to Bluetooth POS thermal printer for #${sale?.saleNumber}...`
+    );
   };
 
   if (isLoading || !sale) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Generating receipt...</Text>
+          <Text style={styles.loadingText}>
+            {language === 'te' ? 'రసీదు తయారవుతోంది...' : 'Generating receipt...'}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -62,29 +71,29 @@ export default function ReceiptScreen() {
         {/* Success Icon */}
         <View style={styles.successHeader}>
           <View style={styles.successIconCircle}>
-            <CheckCircle2 size={40} color={Colors.white} />
+            <CheckCircle2 size={36} color={Colors.white} />
           </View>
-          <Text style={styles.successTitle}>Sale Confirmed!</Text>
+          <Text style={styles.successTitle}>{t('saleConfirmed')}</Text>
           <Text style={styles.saleNumberText}>{sale.saleNumber}</Text>
         </View>
 
         {/* Receipt Paper Card */}
         <Card style={styles.receiptCard}>
           <View style={styles.storeHeader}>
-            <Text style={styles.storeName}>FreshStock Family Groceries</Text>
+            <Text style={styles.storeName}>{t('storeName')}</Text>
             <Text style={styles.storeSubtitle}>Main Bazaar Road • Phone: +91 98765 43210</Text>
             <Text style={styles.dateTimeText}>{formatDate(sale.createdAt)}</Text>
           </View>
 
           <View style={styles.metaRow}>
             <View>
-              <Text style={styles.metaLabel}>Customer</Text>
+              <Text style={styles.metaLabel}>{t('customerName')}</Text>
               <Text style={styles.metaVal}>{sale.customerName || 'Walk-in'}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.metaLabel}>Type</Text>
+              <Text style={styles.metaLabel}>{t('pricingMode')}</Text>
               <Badge
-                label={sale.customerType}
+                label={sale.customerType === 'RESELLER' ? t('reseller') : t('retail')}
                 variant={sale.customerType === 'RESELLER' ? 'reseller' : 'retail'}
               />
             </View>
@@ -94,10 +103,18 @@ export default function ReceiptScreen() {
 
           {/* Line Items */}
           <View style={styles.tableHeader}>
-            <Text style={[styles.colHeader, { flex: 2 }]}>Item</Text>
-            <Text style={[styles.colHeader, { textAlign: 'center', flex: 1 }]}>Qty</Text>
-            <Text style={[styles.colHeader, { textAlign: 'right', flex: 1 }]}>Price</Text>
-            <Text style={[styles.colHeader, { textAlign: 'right', flex: 1 }]}>Total</Text>
+            <Text style={[styles.colHeader, { flex: 2 }]}>
+              {language === 'te' ? 'సరుకు' : 'Item'}
+            </Text>
+            <Text style={[styles.colHeader, { textAlign: 'center', flex: 1 }]}>
+              {language === 'te' ? 'పరిమాణం' : 'Qty'}
+            </Text>
+            <Text style={[styles.colHeader, { textAlign: 'right', flex: 1 }]}>
+              {language === 'te' ? 'ధర' : 'Price'}
+            </Text>
+            <Text style={[styles.colHeader, { textAlign: 'right', flex: 1 }]}>
+              {language === 'te' ? 'మొత్తం' : 'Total'}
+            </Text>
           </View>
 
           {sale.lineItems?.map((item: any, idx: number) => (
@@ -121,13 +138,13 @@ export default function ReceiptScreen() {
 
           {/* Totals Breakdown */}
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal</Text>
+            <Text style={styles.totalLabel}>{t('subtotal')}</Text>
             <Text style={styles.totalVal}>{formatCurrency(sale.subtotal)}</Text>
           </View>
 
           {sale.discountTotal > 0 && (
             <View style={styles.totalRow}>
-              <Text style={[styles.totalLabel, { color: Colors.success }]}>Discounts</Text>
+              <Text style={[styles.totalLabel, { color: Colors.success }]}>{t('discount')}</Text>
               <Text style={[styles.totalVal, { color: Colors.success }]}>
                 -{formatCurrency(sale.discountTotal)}
               </Text>
@@ -135,13 +152,13 @@ export default function ReceiptScreen() {
           )}
 
           <View style={[styles.totalRow, styles.grandTotalRow]}>
-            <Text style={styles.grandLabel}>Total Paid</Text>
+            <Text style={styles.grandLabel}>{t('grandTotal')}</Text>
             <Text style={styles.grandVal}>{formatCurrency(sale.total)}</Text>
           </View>
 
           <View style={styles.paymentInfo}>
             <Text style={styles.paymentMethodText}>
-              Payment: {sale.paymentDetails?.method || 'CASH'} • Status: {sale.paymentStatus}
+              {t('paymentMethod')}: {sale.paymentDetails?.method || 'CASH'} • {sale.paymentStatus}
             </Text>
             {sale.paymentDetails?.upiReference ? (
               <Text style={styles.upiRefText}>
@@ -150,20 +167,20 @@ export default function ReceiptScreen() {
             ) : null}
           </View>
 
-          <Text style={styles.thankYouText}>Thank you for shopping with us! 🙏</Text>
+          <Text style={styles.thankYouText}>{t('thankYou')}</Text>
         </Card>
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsRow}>
           <Button
-            title="Share Bill"
+            title={t('shareReceipt')}
             onPress={handleShare}
             variant="outline"
             icon={<Share2 size={16} color={Colors.primary} />}
             style={styles.actionBtn}
           />
           <Button
-            title="Print"
+            title={t('printReceipt')}
             onPress={handlePrint}
             variant="outline"
             icon={<Printer size={16} color={Colors.primary} />}
@@ -172,7 +189,7 @@ export default function ReceiptScreen() {
         </View>
 
         <Button
-          title="Start New Sale"
+          title={t('newSale')}
           onPress={() => router.replace('/(tabs)/sell')}
           size="lg"
           icon={<PlusCircle size={18} color={Colors.white} />}
@@ -186,12 +203,12 @@ export default function ReceiptScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.lightMint,
+    backgroundColor: Colors.mintBackground,
   },
   loadingContainer: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
     color: Colors.secondaryText,
@@ -206,57 +223,67 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   successIconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   successTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '900',
     color: Colors.darkForest,
   },
   saleNumberText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
     color: Colors.secondaryText,
     marginTop: 2,
+    fontWeight: '600',
   },
   receiptCard: {
+    borderRadius: 24,
+    padding: Spacing.lg,
     backgroundColor: Colors.white,
-    padding: Spacing.xl,
+    shadowColor: '#103828',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
     borderWidth: 1,
-    borderColor: '#D8E4DC',
+    borderColor: '#E6EFE9',
+    marginBottom: Spacing.lg,
   },
   storeHeader: {
     alignItems: 'center',
     marginBottom: Spacing.md,
   },
   storeName: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '900',
     color: Colors.darkForest,
-    textAlign: 'center',
   },
   storeSubtitle: {
     fontSize: 11,
     color: Colors.secondaryText,
     marginTop: 2,
-    textAlign: 'center',
   },
   dateTimeText: {
     fontSize: 11,
-    color: Colors.secondaryText,
-    marginTop: 4,
+    color: '#9EAEA5',
+    marginTop: 2,
   },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    marginBottom: Spacing.sm,
   },
   metaLabel: {
     fontSize: 11,
@@ -269,109 +296,104 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   dottedDivider: {
-    height: 1,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borders,
     borderStyle: 'dashed',
-    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E0ECE4',
+    marginVertical: 12,
   },
   tableHeader: {
     flexDirection: 'row',
-    paddingBottom: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borders,
+    marginBottom: 8,
   },
   colHeader: {
     fontSize: 11,
     fontWeight: '700',
     color: Colors.secondaryText,
-    textTransform: 'uppercase',
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#F0F4F1',
     alignItems: 'center',
+    paddingVertical: 6,
   },
   itemName: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 12.5,
+    fontWeight: '700',
     color: Colors.darkForest,
   },
   itemText: {
     fontSize: 12,
-    color: Colors.mainText,
+    color: Colors.secondaryText,
   },
   itemTotal: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
     color: Colors.darkForest,
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   totalLabel: {
-    fontSize: 13,
+    fontSize: 12.5,
     color: Colors.secondaryText,
   },
   totalVal: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.darkForest,
   },
   grandTotalRow: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.borders,
+    marginTop: 4,
     paddingTop: 8,
-    marginTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#E6EFE9',
   },
   grandLabel: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
     color: Colors.darkForest,
   },
   grandVal: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
     color: Colors.primary,
   },
   paymentInfo: {
-    backgroundColor: Colors.veryLightMint,
-    padding: 8,
-    borderRadius: 8,
+    backgroundColor: '#F3F9F5',
+    borderRadius: 12,
+    padding: 10,
     marginTop: 12,
     alignItems: 'center',
   },
   paymentMethodText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11.5,
+    fontWeight: '700',
     color: Colors.darkForest,
   },
   upiRefText: {
-    fontSize: 11,
+    fontSize: 10.5,
     color: Colors.secondaryText,
     marginTop: 2,
   },
   thankYouText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.primary,
     textAlign: 'center',
-    fontSize: 12,
-    color: Colors.secondaryText,
-    marginTop: Spacing.md,
-    fontStyle: 'italic',
+    marginTop: 16,
   },
   actionButtonsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   actionBtn: {
     flex: 1,
-    backgroundColor: Colors.white,
+    borderRadius: 18,
   },
   newSaleBtn: {
-    marginTop: Spacing.md,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
   },
 });

@@ -1,19 +1,44 @@
 export const Colors = {
-  primary: '#159A78', // Primary green
-  darkForest: '#245C4B', // Dark forest green
-  lightMint: '#E5F3E9', // Light mint background
-  veryLightMint: '#F1F8F2', // Very light mint for card accents
-  warmCream: '#F8F1E5', // Warm cream background alternative
-  softPeach: '#F7E4D4', // Soft peach highlight
+  // Brand colors matching the uploaded grocery mobile UI reference
+  primary: '#229E74', // Soft vibrant grocery green
+  darkForest: '#194B38', // Deep forest green for crisp typography
+  mintBackground: '#F4F9F5', // Soft, clean canvas background
+  lightMint: '#F4F9F5', // Soft background alias
+  veryLightMint: '#EAF6EF', // Subtle mint tint
+  warmCream: '#FFF8EE', // Warm cream background
+  softPeach: '#FDEEE2', // Soft peach highlight
+  softLavender: '#F3EEFB', // Soft lavender tint
+  softSky: '#EBF5FB', // Soft sky blue tint
+  softButter: '#FEFCE8', // Buttercup soft yellow
+  softRose: '#FDECEF', // Rose tint
   white: '#FFFFFF',
-  mainText: '#293A33', // Deep charcoal-green text
-  secondaryText: '#7A877F', // Muted secondary text
-  borders: '#E5EAE5', // Subtle divider border
-  success: '#21845A',
-  warning: '#C9892B',
-  error: '#C74D4D',
+  surfaceLight: '#FFFFFF',
   cardBg: '#FFFFFF',
-  surfaceLight: '#F7FAF8',
+
+  // Text
+  mainText: '#233831', // Rich charcoal green
+  secondaryText: '#7B8E85', // Soft slate
+  borders: '#E6EFE9', // Extremely soft divider borders
+
+  // Status
+  success: '#229E74',
+  warning: '#D97706',
+  error: '#DC2626',
+
+  // Floating dock
+  dockBg: '#229E74',
+  dockActive: '#FFFFFF',
+  dockInactive: '#96D6BE',
+
+  // Card tints for products
+  cardTints: [
+    '#EAF7EE', // Mint tint
+    '#FDF1E6', // Peach tint
+    '#F5EFFB', // Lavender tint
+    '#FEFCE8', // Butter tint
+    '#EBF4FA', // Sky tint
+    '#FCEEF0', // Coral tint
+  ],
 };
 
 export const Spacing = {
@@ -24,14 +49,4 @@ export const Spacing = {
   xl: 20,
   xxl: 24,
   xxxl: 32,
-};
-
-export const Typography = {
-  h1: { fontSize: 26, fontWeight: '700' as const, color: Colors.darkForest },
-  h2: { fontSize: 20, fontWeight: '700' as const, color: Colors.darkForest },
-  h3: { fontSize: 16, fontWeight: '600' as const, color: Colors.darkForest },
-  body: { fontSize: 14, fontWeight: '400' as const, color: Colors.mainText },
-  bodyBold: { fontSize: 14, fontWeight: '600' as const, color: Colors.mainText },
-  caption: { fontSize: 12, fontWeight: '400' as const, color: Colors.secondaryText },
-  captionBold: { fontSize: 12, fontWeight: '600' as const, color: Colors.secondaryText },
 };

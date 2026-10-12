@@ -19,8 +19,11 @@ import {
   LogOut,
   ChevronRight,
   Store,
+  Globe,
+  Check,
 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
+import { useLanguage } from '../../src/context/LanguageContext';
 import { Colors, Spacing } from '../../src/theme/colors';
 import { Header } from '../../src/components/Header';
 import { Card } from '../../src/components/Card';
@@ -30,24 +33,38 @@ import { Button } from '../../src/components/Button';
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, isOwner, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to log out of FreshStock?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/login');
+    Alert.alert(
+      t('signOut'),
+      language === 'te'
+        ? 'మీరు ఖచ్చితంగా ఫ్రెష్‌స్టాక్ నుండి లాగౌట్ కావాలనుకుంటున్నారా?'
+        : 'Are you sure you want to log out of FreshStock?',
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('signOut'),
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            router.replace('/(auth)/login');
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Header title="Store Settings" subtitle="Account, permissions & administration" />
+      <Header
+        title={language === 'te' ? 'స్టోర్ సెట్టింగ్స్' : 'Store Settings'}
+        subtitle={
+          language === 'te'
+            ? 'ఖాతా, భాష & దుకాణ నిర్వహణ'
+            : 'Account, language & administration'
+        }
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* User Profile Card */}
@@ -60,27 +77,66 @@ export default function SettingsScreen() {
             <Text style={styles.userEmail}>{user?.email || 'user@freshstock.com'}</Text>
             <View style={styles.roleBadgeRow}>
               <Badge
-                label={isOwner ? '👑 Store Owner (Full Access)' : '🛒 Salesperson'}
+                label={isOwner ? t('ownerBadge') : t('salesBadge')}
                 variant={isOwner ? 'reseller' : 'retail'}
               />
             </View>
           </View>
         </Card>
 
+        {/* Language Selection Card */}
+        <Text style={styles.menuHeading}>{t('language')}</Text>
+        <Card style={styles.menuCard}>
+          <TouchableOpacity
+            style={[styles.langOptionRow, language === 'te' && styles.activeLangRow]}
+            onPress={() => setLanguage('te')}
+          >
+            <View style={styles.langLeft}>
+              <Text style={styles.langFlag}>🇮🇳</Text>
+              <View>
+                <Text style={styles.langTitle}>తెలుగు (Telugu)</Text>
+                <Text style={styles.langSubtitle}>యాప్ అంతటా తెలుగు భాష</Text>
+              </View>
+            </View>
+            {language === 'te' && <Check size={20} color={Colors.primary} />}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.langOptionRow, language === 'en' && styles.activeLangRow, { borderBottomWidth: 0 }]}
+            onPress={() => setLanguage('en')}
+          >
+            <View style={styles.langLeft}>
+              <Text style={styles.langFlag}>🌐</Text>
+              <View>
+                <Text style={styles.langTitle}>English</Text>
+                <Text style={styles.langSubtitle}>English throughout the app</Text>
+              </View>
+            </View>
+            {language === 'en' && <Check size={20} color={Colors.primary} />}
+          </TouchableOpacity>
+        </Card>
+
         {/* Store Profile */}
-        <Card>
+        <Text style={styles.menuHeading}>{language === 'te' ? 'దుకాణం వివరాలు' : 'Store Details'}</Text>
+        <Card style={styles.menuCard}>
           <View style={styles.storeHeader}>
             <Store size={20} color={Colors.primary} />
-            <Text style={styles.storeHeading}>{user?.store?.name || 'FreshStock Groceries'}</Text>
+            <Text style={styles.storeHeading}>{user?.store?.name || t('storeName')}</Text>
           </View>
-          <Text style={styles.storeDetail}>Currency: Indian Rupee (INR - ₹)</Text>
-          <Text style={styles.storeDetail}>Timezone: Asia/Kolkata (IST)</Text>
+          <Text style={styles.storeDetail}>
+            {language === 'te' ? 'కరెన్సీ: భారత రూపాయి (INR - ₹)' : 'Currency: Indian Rupee (INR - ₹)'}
+          </Text>
+          <Text style={styles.storeDetail}>
+            {language === 'te' ? 'సమయ మండలం: Asia/Kolkata (IST)' : 'Timezone: Asia/Kolkata (IST)'}
+          </Text>
         </Card>
 
         {/* Store Management (Owner Only) */}
         {isOwner && (
           <>
-            <Text style={styles.menuHeading}>Owner Administration</Text>
+            <Text style={styles.menuHeading}>
+              {language === 'te' ? 'ఓనర్ నిర్వాహక ప్యానెల్' : 'Owner Administration'}
+            </Text>
 
             <Card style={styles.menuCard}>
               <TouchableOpacity
@@ -89,7 +145,9 @@ export default function SettingsScreen() {
               >
                 <View style={styles.menuLeft}>
                   <FileText size={18} color={Colors.darkForest} />
-                  <Text style={styles.menuText}>Audit Trail Logs</Text>
+                  <Text style={styles.menuText}>
+                    {language === 'te' ? 'ఆడిట్ లాగ్స్ & రికార్డులు' : 'Audit Trail Logs'}
+                  </Text>
                 </View>
                 <ChevronRight size={18} color={Colors.secondaryText} />
               </TouchableOpacity>
@@ -100,7 +158,9 @@ export default function SettingsScreen() {
               >
                 <View style={styles.menuLeft}>
                   <Users size={18} color={Colors.darkForest} />
-                  <Text style={styles.menuText}>Users & Role Permissions</Text>
+                  <Text style={styles.menuText}>
+                    {language === 'te' ? 'యూజర్లు & అనుమతులు' : 'Users & Role Permissions'}
+                  </Text>
                 </View>
                 <ChevronRight size={18} color={Colors.secondaryText} />
               </TouchableOpacity>
@@ -111,7 +171,9 @@ export default function SettingsScreen() {
               >
                 <View style={styles.menuLeft}>
                   <Truck size={18} color={Colors.darkForest} />
-                  <Text style={styles.menuText}>Suppliers Directory</Text>
+                  <Text style={styles.menuText}>
+                    {language === 'te' ? 'సప్లయర్ల డైరెక్టరీ' : 'Suppliers Directory'}
+                  </Text>
                 </View>
                 <ChevronRight size={18} color={Colors.secondaryText} />
               </TouchableOpacity>
@@ -122,7 +184,9 @@ export default function SettingsScreen() {
               >
                 <View style={styles.menuLeft}>
                   <Shield size={18} color={Colors.darkForest} />
-                  <Text style={styles.menuText}>Bulk Purchase History</Text>
+                  <Text style={styles.menuText}>
+                    {language === 'te' ? 'హోల్‌సేల్ కొనుగోళ్ల చరిత్ర' : 'Bulk Purchase History'}
+                  </Text>
                 </View>
                 <ChevronRight size={18} color={Colors.secondaryText} />
               </TouchableOpacity>
@@ -131,15 +195,19 @@ export default function SettingsScreen() {
         )}
 
         {/* General Management */}
-        <Text style={styles.menuHeading}>Operations</Text>
+        <Text style={styles.menuHeading}>
+          {language === 'te' ? 'అమ్మకాల నిర్వహణ' : 'Operations'}
+        </Text>
         <Card style={styles.menuCard}>
           <TouchableOpacity
-            style={styles.menuItem}
+            style={[styles.menuItem, { borderBottomWidth: 0 }]}
             onPress={() => router.push('/sales/history')}
           >
             <View style={styles.menuLeft}>
               <RotateCcw size={18} color={Colors.darkForest} />
-              <Text style={styles.menuText}>Sales History & Returns</Text>
+              <Text style={styles.menuText}>
+                {language === 'te' ? 'అమ్మకాల చరిత్ర & రిటర్న్స్' : 'Sales History & Returns'}
+              </Text>
             </View>
             <ChevronRight size={18} color={Colors.secondaryText} />
           </TouchableOpacity>
@@ -147,7 +215,7 @@ export default function SettingsScreen() {
 
         {/* Sign Out Button */}
         <Button
-          title="Sign Out of FreshStock"
+          title={language === 'te' ? 'ఫ్రెష్‌స్టాక్ నుండి లాగౌట్ అవ్వండి' : 'Sign Out of FreshStock'}
           onPress={handleLogout}
           variant="destructive"
           icon={<LogOut size={16} color={Colors.white} />}
@@ -161,16 +229,18 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.lightMint,
+    backgroundColor: Colors.mintBackground,
   },
   scrollContent: {
     padding: Spacing.lg,
-    paddingBottom: 40,
+    paddingBottom: 90, // Room for floating dock
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.lg,
+    borderRadius: 22,
+    marginBottom: Spacing.md,
   },
   avatarCircle: {
     width: 56,
@@ -179,61 +249,91 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.md,
+    marginRight: 14,
   },
   userInfo: {
     flex: 1,
   },
   userName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '800',
     color: Colors.darkForest,
   },
   userEmail: {
-    fontSize: 12,
+    fontSize: 12.5,
     color: Colors.secondaryText,
     marginTop: 2,
   },
   roleBadgeRow: {
     marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  menuHeading: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: Colors.darkForest,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  menuCard: {
+    borderRadius: 20,
+    padding: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  langOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F5F2',
+  },
+  activeLangRow: {
+    backgroundColor: '#FAFDFB',
+  },
+  langLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  langFlag: {
+    fontSize: 24,
+  },
+  langTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: Colors.darkForest,
+  },
+  langSubtitle: {
+    fontSize: 11.5,
+    color: Colors.secondaryText,
+    marginTop: 1,
   },
   storeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     marginBottom: 8,
+    gap: 8,
   },
   storeHeading: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.darkForest,
   },
   storeDetail: {
     fontSize: 12,
     color: Colors.secondaryText,
-    marginTop: 2,
-  },
-  menuHeading: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.secondaryText,
-    textTransform: 'uppercase',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
-    marginLeft: 4,
-  },
-  menuCard: {
-    padding: 0,
-    overflow: 'hidden',
+    marginTop: 3,
   },
   menuItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    justifyContent: 'space-between',
+    paddingVertical: 13,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borders,
+    borderBottomColor: '#F0F5F2',
   },
   menuLeft: {
     flexDirection: 'row',
@@ -241,11 +341,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   menuText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13.5,
+    fontWeight: '700',
     color: Colors.darkForest,
   },
   logoutBtn: {
-    marginTop: Spacing.xl,
+    marginTop: Spacing.lg,
+    borderRadius: 20,
   },
 });
