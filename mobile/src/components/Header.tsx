@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Store, ShoppingBag, Globe } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Colors, Spacing } from '../theme/colors';
@@ -29,11 +29,15 @@ export const Header: React.FC<HeaderProps> = ({
     <View style={styles.container}>
       <View style={styles.leftRow}>
         <View style={styles.avatarCircle}>
-          <Store size={20} color={Colors.white} />
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="cover"
+          />
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.title} numberOfLines={1}>
-            {title || t('storeName')}
+            {title || (language === 'te' ? 'భార్గవి కిరాణా & జనరల్ స్టోర్స్' : 'Bhargavi Kirana & General Stores')}
           </Text>
           <Text style={styles.subtitle} numberOfLines={1}>
             {subtitle || (isOwner ? t('ownerBadge') : t('salesBadge'))}
@@ -91,29 +95,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatarCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: Colors.primary,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    overflow: 'hidden',
+    backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+    borderWidth: 1.5,
+    borderColor: '#D4E8DC',
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 2,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 15.5,
+    fontWeight: '900',
     color: Colors.darkForest,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: Colors.secondaryText,
     marginTop: 1,
   },

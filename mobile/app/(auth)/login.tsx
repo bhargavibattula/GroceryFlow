@@ -8,6 +8,7 @@ import {
   Platform,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -118,9 +119,15 @@ export default function LoginScreen() {
           {/* Header Branding */}
           <View style={styles.header}>
             <View style={styles.iconCircle}>
-              <Store size={38} color={Colors.white} />
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.logoImage}
+                resizeMode="cover"
+              />
             </View>
-            <Text style={styles.appName}>{t('appName')}</Text>
+            <Text style={styles.appName}>
+              {language === 'te' ? 'భార్గవి కిరాణా & జనరల్ స్టోర్స్' : 'Bhargavi Kirana & General Stores'}
+            </Text>
             <Text style={styles.tagline}>{t('tagline')}</Text>
           </View>
 
@@ -262,18 +269,25 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   iconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: Colors.primary,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    overflow: 'hidden',
+    backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
+    borderWidth: 2.5,
+    borderColor: '#D4E8DC',
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
     elevation: 3,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   appName: {
     fontSize: 26,
