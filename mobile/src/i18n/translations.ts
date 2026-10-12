@@ -2,9 +2,9 @@ export type Language = 'en' | 'te';
 
 export const translations = {
   en: {
-    appName: 'FreshStock',
-    tagline: 'Family Grocery Store Inventory & Dual-Pricing System',
-    storeName: 'FreshStock Family Groceries',
+    appName: 'Bhargavi Kirana',
+    tagline: 'Store Inventory & Dual-Pricing System',
+    storeName: 'Bhargavi Kirana & General Stores',
     welcome: 'Welcome',
     ownerBadge: '👑 Owner (Father)',
     salesBadge: '🛒 Salesperson',
@@ -103,9 +103,9 @@ export const translations = {
     language: 'Language',
   },
   te: {
-    appName: 'ఫ్రెష్‌స్టాక్',
-    tagline: 'కిరాణా దుకాణం ఇన్వెంటరీ & డ్యూయల్-ధరల వ్యవస్థ',
-    storeName: 'ఫ్రెష్‌స్టాక్ ఫ్యామిలీ కిరాణా',
+    appName: 'భార్గవి కిరాణా',
+    tagline: 'కిరాణా ఇన్వెంటరీ & డ్యూయల్-ధరల వ్యవస్థ',
+    storeName: 'భార్గవి కిరాణా & జనరల్ స్టోర్స్',
     welcome: 'స్వాగతం',
     ownerBadge: '👑 యజమాని (ఓనర్)',
     salesBadge: '🛒 సేల్స్‌పర్సన్',

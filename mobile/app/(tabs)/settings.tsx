@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -120,8 +121,19 @@ export default function SettingsScreen() {
         <Text style={styles.menuHeading}>{language === 'te' ? 'దుకాణం వివరాలు' : 'Store Details'}</Text>
         <Card style={styles.menuCard}>
           <View style={styles.storeHeader}>
-            <Store size={20} color={Colors.primary} />
-            <Text style={styles.storeHeading}>{user?.store?.name || t('storeName')}</Text>
+            <View style={styles.storeLogoCircle}>
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.storeLogoImage}
+                resizeMode="cover"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.storeHeading}>
+                {language === 'te' ? 'భార్గవి కిరాణా & జనరల్ స్టోర్స్' : 'Bhargavi Kirana & General Stores'}
+              </Text>
+              <Text style={styles.storeSub}>FreshStock Inventory & Dual-Pricing</Text>
+            </View>
           </View>
           <Text style={styles.storeDetail}>
             {language === 'te' ? 'కరెన్సీ: భారత రూపాయి (INR - ₹)' : 'Currency: Indian Rupee (INR - ₹)'}
@@ -314,13 +326,31 @@ const styles = StyleSheet.create({
   storeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
+    marginBottom: 10,
+    gap: 12,
+  },
+  storeLogoCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: Colors.white,
+    borderWidth: 2,
+    borderColor: '#D4E8DC',
+  },
+  storeLogoImage: {
+    width: '100%',
+    height: '100%',
   },
   storeHeading: {
     fontSize: 15,
     fontWeight: '800',
     color: Colors.darkForest,
+  },
+  storeSub: {
+    fontSize: 11,
+    color: Colors.secondaryText,
+    marginTop: 2,
   },
   storeDetail: {
     fontSize: 12,

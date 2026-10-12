@@ -7,6 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   FlatList,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -166,10 +167,16 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.promoGraphic}>
-            <Text style={styles.promoGraphicEmoji}>🛍️🍉</Text>
+            <View style={styles.promoLogoCircle}>
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.promoLogoImage}
+                resizeMode="cover"
+              />
+            </View>
             <View style={styles.promoCashbackBadge}>
-              <Text style={styles.promoCashbackText}>CASH</Text>
-              <Text style={styles.promoCashbackTextBold}>BACK</Text>
+              <Text style={styles.promoCashbackText}>BHARGAVI</Text>
+              <Text style={styles.promoCashbackTextBold}>STORES</Text>
             </View>
           </View>
         </View>
@@ -499,8 +506,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  promoGraphicEmoji: {
-    fontSize: 46,
+  promoLogoCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    backgroundColor: Colors.white,
+    borderWidth: 2,
+    borderColor: '#CCE4DA',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  promoLogoImage: {
+    width: '100%',
+    height: '100%',
   },
   promoCashbackBadge: {
     backgroundColor: '#FFFFFF',

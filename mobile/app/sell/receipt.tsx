@@ -7,6 +7,7 @@ import {
   Share,
   TouchableOpacity,
   Alert,
+  Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -80,7 +81,16 @@ export default function ReceiptScreen() {
         {/* Receipt Paper Card */}
         <Card style={styles.receiptCard}>
           <View style={styles.storeHeader}>
-            <Text style={styles.storeName}>{t('storeName')}</Text>
+            <View style={styles.receiptLogoCircle}>
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.receiptLogoImage}
+                resizeMode="cover"
+              />
+            </View>
+            <Text style={styles.storeName}>
+              {language === 'te' ? 'భార్గవి కిరాణా & జనరల్ స్టోర్స్' : 'Bhargavi Kirana & General Stores'}
+            </Text>
             <Text style={styles.storeSubtitle}>Main Bazaar Road • Phone: +91 98765 43210</Text>
             <Text style={styles.dateTimeText}>{formatDate(sale.createdAt)}</Text>
           </View>
@@ -263,6 +273,20 @@ const styles = StyleSheet.create({
   storeHeader: {
     alignItems: 'center',
     marginBottom: Spacing.md,
+  },
+  receiptLogoCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    overflow: 'hidden',
+    backgroundColor: Colors.white,
+    borderWidth: 2,
+    borderColor: '#D4E8DC',
+    marginBottom: 8,
+  },
+  receiptLogoImage: {
+    width: '100%',
+    height: '100%',
   },
   storeName: {
     fontSize: 17,
