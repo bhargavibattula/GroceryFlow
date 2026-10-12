@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "freshstock",
+    "scheme": "bhargavikirana",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "splash": {
@@ -19,9 +19,9 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#159A78"
+        "backgroundColor": "#E5F3E9"
       },
-      "package": "com.freshstock.store"
+      "package": "com.bhargavikirana.store"
     },
     "web": {
       "bundler": "metro",
