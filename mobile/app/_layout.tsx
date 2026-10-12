@@ -87,6 +87,10 @@ export default function RootLayout() {
                   name="suppliers/index"
                   options={{ title: 'Suppliers Directory', headerBackTitle: 'Back' }}
                 />
+                <Stack.Screen
+                  name="khata"
+                  options={{ headerShown: false }}
+                />
               </Stack>
             </CartProvider>
           </AuthProvider>

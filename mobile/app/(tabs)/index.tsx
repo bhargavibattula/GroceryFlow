@@ -22,6 +22,7 @@ import {
   ArrowRight,
   Sparkles,
   ChevronRight,
+  BookOpen,
 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { useLanguage } from '../../src/context/LanguageContext';
@@ -175,6 +176,35 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        {/* Digital Khata Book Hero Card */}
+        <TouchableOpacity
+          style={styles.khataCard}
+          activeOpacity={0.88}
+          onPress={() => router.push('/khata/index' as any)}
+        >
+          <View style={styles.khataLeft}>
+            <View style={styles.khataBadge}>
+              <BookOpen size={14} color="#15803D" />
+              <Text style={styles.khataBadgeText}>
+                {language === 'te' ? 'డిజిటల్ బాహీ ఖాతా' : 'Digital Bahi Khata'}
+              </Text>
+            </View>
+            <Text style={styles.khataTitle}>
+              {language === 'te'
+                ? 'కస్టమర్ బాకీలు & సప్లయర్ లెడ్జర్'
+                : 'Customer Dues & Supplier Ledgers'}
+            </Text>
+            <Text style={styles.khataSub}>
+              {language === 'te'
+                ? 'ఉద్దెరలు, వసూళ్లు మరియు రిమైండర్లు చూడండి →'
+                : 'Track credit, payments & send reminders →'}
+            </Text>
+          </View>
+          <View style={styles.khataArrowBtn}>
+            <ArrowRight size={18} color={Colors.white} />
+          </View>
+        </TouchableOpacity>
+
         {/* Quick Operational Shortcuts */}
         <View style={styles.quickActionsContainer}>
           <TouchableOpacity
@@ -185,6 +215,18 @@ export default function DashboardScreen() {
               <ShoppingCart size={22} color={Colors.primary} />
             </View>
             <Text style={styles.actionText}>{t('quickSell')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => router.push('/khata/index' as any)}
+          >
+            <View style={[styles.actionIconCircle, { backgroundColor: '#DCFCE7' }]}>
+              <BookOpen size={22} color="#15803D" />
+            </View>
+            <Text style={styles.actionText}>
+              {language === 'te' ? 'బాహీ ఖాతా' : 'Khata'}
+            </Text>
           </TouchableOpacity>
 
           {isOwner && (
@@ -488,6 +530,66 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
+    elevation: 3,
+  },
+  khataCard: {
+    backgroundColor: '#EAF6EF',
+    borderRadius: 22,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.lg,
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
+    shadowColor: '#103828',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  khataLeft: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  khataBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
+  khataBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+  khataTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  khataSub: {
+    fontSize: 11.5,
+    color: '#4B5563',
+    fontWeight: '500',
+  },
+  khataArrowBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.dockBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#103828',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
     elevation: 3,
   },
   promoBtnText: {
