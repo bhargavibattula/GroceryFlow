@@ -22,7 +22,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <CartProvider>
-            <StatusBar style="dark" backgroundColor={Colors.lightMint} />
+            <StatusBar style="dark" />
             <Stack
               screenOptions={{
                 headerStyle: { backgroundColor: Colors.white },

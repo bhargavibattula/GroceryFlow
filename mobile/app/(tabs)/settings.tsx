@@ -107,7 +107,7 @@ export default function SettingsScreen() {
 
               <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => router.push('/suppliers/index')}
+                onPress={() => router.push('/suppliers')}
               >
                 <View style={styles.menuLeft}>
                   <Truck size={18} color={Colors.darkForest} />
