@@ -15,6 +15,7 @@ import supplierRoutes from './routes/supplierRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import userRoutes from './routes/userRoutes';
 import categoryRoutes from './routes/categoryRoutes';
+import khataRoutes from './routes/khataRoutes';
 
 export const app = express();
 
@@ -112,6 +113,7 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api', userRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/khata', khataRoutes);
 
 // Centralized error handler
 app.use(errorHandler);
