@@ -1,0 +1,27 @@
+{
+  "name": "freshstock-monorepo",
+  "version": "1.0.0",
+  "description": "FreshStock — Grocery Store Inventory & Dual-Pricing Management App",
+  "scripts": {
+    "server:dev": "npm --prefix server run dev",
+    "server:seed": "npm --prefix server run seed",
+    "server:test": "npm --prefix server test",
+    "server:build": "npm --prefix server run build",
+    "server:start": "npm --prefix server start",
+    "mobile:start": "npm --prefix mobile start",
+    "mobile:android": "npm --prefix mobile run android",
+    "mobile:web": "npm --prefix mobile run web",
+    "test": "npm --prefix server test"
+  },
+  "keywords": [
+    "grocery",
+    "inventory",
+    "dual-pricing",
+    "react-native",
+    "expo",
+    "express",
+    "mongodb"
+  ],
+  "author": "Bhargavi Battula",
+  "license": "ISC"
+}
