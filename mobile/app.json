@@ -4,7 +4,7 @@
     "slug": "bhargavi-kirana",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.png",
     "scheme": "bhargavikirana",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#E5F3E9"
       },
       "package": "com.bhargavikirana.store"
