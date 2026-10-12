@@ -120,7 +120,7 @@ export default function LoginScreen() {
           <View style={styles.header}>
             <View style={styles.iconCircle}>
               <Image
-                source={require('../../assets/logo.png')}
+                source={require('../../assets/icon-mark.png')}
                 style={styles.logoImage}
                 resizeMode="cover"
               />

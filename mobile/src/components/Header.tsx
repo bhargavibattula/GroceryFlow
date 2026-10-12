@@ -30,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
       <View style={styles.leftRow}>
         <View style={styles.avatarCircle}>
           <Image
-            source={require('../../assets/logo.png')}
+            source={require('../../assets/icon-mark.png')}
             style={styles.logoImage}
             resizeMode="cover"
           />

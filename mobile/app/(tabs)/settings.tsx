@@ -123,7 +123,7 @@ export default function SettingsScreen() {
           <View style={styles.storeHeader}>
             <View style={styles.storeLogoCircle}>
               <Image
-                source={require('../../assets/logo.png')}
+                source={require('../../assets/icon-mark.png')}
                 style={styles.storeLogoImage}
                 resizeMode="cover"
               />

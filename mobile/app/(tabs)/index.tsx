@@ -167,17 +167,11 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.promoGraphic}>
-            <View style={styles.promoLogoCircle}>
-              <Image
-                source={require('../../assets/logo.png')}
-                style={styles.promoLogoImage}
-                resizeMode="cover"
-              />
-            </View>
-            <View style={styles.promoCashbackBadge}>
-              <Text style={styles.promoCashbackText}>BHARGAVI</Text>
-              <Text style={styles.promoCashbackTextBold}>STORES</Text>
-            </View>
+            <Image
+              source={require('../../assets/promo-banner.png')}
+              style={styles.promoIllustration}
+              resizeMode="cover"
+            />
           </View>
         </View>
 
@@ -503,46 +497,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   promoGraphic: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  promoLogoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 90,
+    height: 90,
+    borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: Colors.white,
-    borderWidth: 2,
+    backgroundColor: '#FFFFFF66',
+    borderWidth: 1,
     borderColor: '#CCE4DA',
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 2,
   },
-  promoLogoImage: {
+  promoIllustration: {
     width: '100%',
     height: '100%',
-  },
-  promoCashbackBadge: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    alignItems: 'center',
-    marginTop: -8,
-    borderWidth: 1,
-    borderColor: '#D4E2DC',
-  },
-  promoCashbackText: {
-    fontSize: 8.5,
-    fontWeight: '700',
-    color: '#FF5E5E',
-  },
-  promoCashbackTextBold: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: Colors.darkForest,
   },
   quickActionsContainer: {
     flexDirection: 'row',

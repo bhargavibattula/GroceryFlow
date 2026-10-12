@@ -83,7 +83,7 @@ export default function ReceiptScreen() {
           <View style={styles.storeHeader}>
             <View style={styles.receiptLogoCircle}>
               <Image
-                source={require('../../assets/logo.png')}
+                source={require('../../assets/icon-mark.png')}
                 style={styles.receiptLogoImage}
                 resizeMode="cover"
               />
