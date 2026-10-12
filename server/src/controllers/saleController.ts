@@ -30,6 +30,10 @@ export const createSaleSchema = z.object({
     digitalAmount: z.number().min(0).optional(),
   }),
   idempotencyKey: z.string().optional(),
+  isCreditSale: z.boolean().optional(),
+  paymentStatus: z.enum(['PAID', 'PENDING', 'PARTIAL']).optional(),
+  creditAmount: z.number().min(0).optional(),
+  dueDate: z.string().or(z.date()).optional(),
 });
 
 export async function getSales(req: AuthenticatedRequest, res: Response): Promise<void> {

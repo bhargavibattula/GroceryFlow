@@ -38,6 +38,8 @@ export default function RecordPurchaseScreen() {
   const [supplierId, setSupplierId] = useState('');
   const [transportation, setTransportation] = useState('500');
   const [loadingCost, setLoadingCost] = useState('150');
+  const [paymentStatus, setPaymentStatus] = useState<'PAID' | 'PARTIAL' | 'PENDING'>('PAID');
+  const [amountPaidImmediately, setAmountPaidImmediately] = useState('');
   const [notes, setNotes] = useState('');
   const [updatePrices, setUpdatePrices] = useState(false);
 
@@ -137,11 +139,13 @@ export default function RecordPurchaseScreen() {
       queryClient.invalidateQueries({ queryKey: ['products-list'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       queryClient.invalidateQueries({ queryKey: ['purchases-list'] });
+      queryClient.invalidateQueries({ queryKey: ['khata-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['khata-accounts'] });
       Alert.alert(
         language === 'te' ? 'కొనుగోలు విజయవంతమైంది' : 'Purchase Recorded',
         language === 'te'
-          ? 'సరుకు స్టాక్ మరియు ల్యాండెడ్ బ్యాచ్ కాస్ట్ నమోదు చేయబడ్డాయి.'
-          : 'Stock increased and landed batch costs recorded.'
+          ? 'సరుకు స్టాక్, ల్యాండెడ్ బ్యాచ్ కాస్ట్ మరియు సప్లయర్ బాహీ ఖాతా అప్‌డేట్ చేయబడ్డాయి.'
+          : 'Stock increased, landed costs recorded, and supplier Khata ledger updated.'
       );
       router.back();
     },
@@ -161,6 +165,13 @@ export default function RecordPurchaseScreen() {
       return;
     }
 
+    const immediatePaid =
+      paymentStatus === 'PAID'
+        ? grandTotal
+        : paymentStatus === 'PARTIAL'
+        ? Number(amountPaidImmediately || 0)
+        : 0;
+
     const payload = {
       supplierId: supplierId || undefined,
       invoiceNumber: invoiceNumber.trim(),
@@ -177,6 +188,8 @@ export default function RecordPurchaseScreen() {
         loading: Number(loadingCost) || 0,
         notes: 'Recorded via FreshStock Mobile',
       },
+      paymentStatus,
+      amountPaidImmediately: immediatePaid,
       updateProductPrices: updatePrices,
       notes: notes.trim(),
     };
@@ -377,6 +390,94 @@ export default function RecordPurchaseScreen() {
               />
             </View>
           </View>
+        </Card>
+
+        {/* Khata Payment Status Card */}
+        <Card style={styles.formCard}>
+          <Text style={styles.sectionHeading}>
+            {language === 'te' ? 'సప్లయర్ చెల్లింపు & బాహీ ఖాతా' : 'Supplier Payment & Khata Status'}
+          </Text>
+
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+            <TouchableOpacity
+              style={[
+                styles.supplierChip,
+                paymentStatus === 'PAID' && styles.activeSupplierChip,
+              ]}
+              onPress={() => setPaymentStatus('PAID')}
+            >
+              <Text
+                style={[
+                  styles.supplierChipText,
+                  paymentStatus === 'PAID' && styles.activeSupplierChipText,
+                ]}
+              >
+                {language === 'te' ? 'పూర్తి చెల్లింపు' : 'Paid in Full'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.supplierChip,
+                paymentStatus === 'PARTIAL' && { backgroundColor: '#D97706', borderColor: '#D97706' },
+              ]}
+              onPress={() => setPaymentStatus('PARTIAL')}
+            >
+              <Text
+                style={[
+                  styles.supplierChipText,
+                  paymentStatus === 'PARTIAL' && { color: Colors.white, fontWeight: '700' },
+                ]}
+              >
+                {language === 'te' ? 'కొంత చెల్లింపు' : 'Partial'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.supplierChip,
+                paymentStatus === 'PENDING' && { backgroundColor: '#DC2626', borderColor: '#DC2626' },
+              ]}
+              onPress={() => setPaymentStatus('PENDING')}
+            >
+              <Text
+                style={[
+                  styles.supplierChipText,
+                  paymentStatus === 'PENDING' && { color: Colors.white, fontWeight: '700' },
+                ]}
+              >
+                {language === 'te' ? 'ఉద్దెర / ఖాతా' : 'On Credit'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {paymentStatus === 'PARTIAL' && (
+            <View style={{ marginBottom: 8 }}>
+              <Input
+                label={language === 'te' ? 'ఇప్పుడు చెల్లించిన మొత్తం (₹)' : 'Paid Now Immediately (₹)'}
+                value={amountPaidImmediately}
+                onChangeText={setAmountPaidImmediately}
+                placeholder="e.g. 2000"
+                keyboardType="numeric"
+              />
+              <Text style={{ fontSize: 11.5, color: '#D97706', fontWeight: '700', marginTop: 2 }}>
+                {language === 'te'
+                  ? 'సప్లయర్‌కి మిగిలిన బాకీ: ₹'
+                  : 'Remaining supplier payable in Khata: ₹'}
+                {Math.max(0, grandTotal - (parseFloat(amountPaidImmediately) || 0))}
+              </Text>
+            </View>
+          )}
+
+          {paymentStatus === 'PENDING' && (
+            <View style={{ backgroundColor: '#FEF2F2', padding: 10, borderRadius: 12 }}>
+              <Text style={{ fontSize: 12, color: '#991B1B', fontWeight: '600' }}>
+                {language === 'te'
+                  ? 'మొత్తం ₹' + grandTotal + ' సప్లయర్ బాహీ ఖాతాలో ఇవ్వాల్సిన బాకీగా రికార్డ్ అవుతుంది.'
+                  : 'Total ₹' + grandTotal + ' will be recorded as supplier payable in Khata.'}
+              </Text>
+            </View>
+          )}
         </Card>
 
         {/* Cost Summary Breakdown */}

@@ -7,6 +7,8 @@ import { recordInventoryMovement } from './inventoryService';
 import { roundMoney } from '../utils/money';
 import { logAudit } from './auditService';
 import { calculateCostPlusPrice, calculateTargetMarginPrice } from '../utils/pricing';
+import { findOrCreateAccountForSupplier, postLedgerTransaction } from './khataService';
+import { Payment } from '../models/Payment';
 
 export interface CreatePurchaseLineInput {
   productId: string;
@@ -33,6 +35,7 @@ export interface CreatePurchaseInput {
   };
   overallDiscount?: number;
   paymentStatus?: 'PAID' | 'PENDING' | 'PARTIAL';
+  amountPaidImmediately?: number;
   notes?: string;
   updateProductPrices?: boolean; // optionally recompute prices based on new landed cost
 }
@@ -49,6 +52,7 @@ export async function createPurchase(input: CreatePurchaseInput): Promise<IPurch
     additionalCosts = {},
     overallDiscount = 0,
     paymentStatus = 'PAID',
+    amountPaidImmediately,
     notes,
     updateProductPrices = false,
   } = input;
@@ -211,5 +215,78 @@ export async function createPurchase(input: CreatePurchaseInput): Promise<IPurch
     },
   });
 
+  // Khata Book Integration: Record credit purchase and any payment made
+  try {
+    if (supplierId || supplierNameSnapshot) {
+      const supplierDoc = supplierId ? await Supplier.findById(supplierId) : null;
+      const finalSupplierName = supplierDoc?.name || supplierNameSnapshot || 'General Supplier';
+      const finalSupplierPhone = supplierDoc?.phone || '';
+
+      const supplierAccount = await findOrCreateAccountForSupplier(
+        storeId,
+        supplierId,
+        finalSupplierName,
+        finalSupplierPhone,
+        userId
+      );
+
+      // Post Credit Purchase
+      await postLedgerTransaction({
+        storeId,
+        accountId: supplierAccount._id.toString(),
+        transactionType: 'CREDIT_PURCHASE',
+        amount: purchase.grandTotal,
+        transactionDate: purchasedAt,
+        referenceType: 'Purchase',
+        referenceId: purchase._id,
+        invoiceNumber,
+        notes: `Bulk Purchase Invoice #${invoiceNumber}`,
+        userId,
+        userName,
+      });
+
+      // Post payment made if any
+      const immediatePaid =
+        amountPaidImmediately !== undefined
+          ? amountPaidImmediately
+          : paymentStatus === 'PAID'
+          ? purchase.grandTotal
+          : 0;
+
+      if (immediatePaid > 0) {
+        await Payment.create({
+          storeId,
+          accountId: supplierAccount._id,
+          paymentDirection: 'OUTGOING',
+          amount: immediatePaid,
+          method: 'CASH',
+          referenceNumber: `INV-${invoiceNumber}`,
+          paymentDate: purchasedAt,
+          allocations: [{ invoiceReference: invoiceNumber, allocatedAmount: immediatePaid, referenceId: purchase._id }],
+          notes: `Immediate payment at purchase for invoice #${invoiceNumber}`,
+          createdBy: userId,
+        });
+
+        await postLedgerTransaction({
+          storeId,
+          accountId: supplierAccount._id.toString(),
+          transactionType: 'PAYMENT_MADE',
+          amount: immediatePaid,
+          transactionDate: purchasedAt,
+          referenceType: 'Payment',
+          referenceId: purchase._id,
+          invoiceNumber,
+          paymentMethod: 'CASH',
+          notes: `Immediate payment at purchase time`,
+          userId,
+          userName,
+        });
+      }
+    }
+  } catch (khataError) {
+    console.warn('[Purchase Khata] Error syncing to ledger:', khataError);
+  }
+
   return purchase;
 }
+

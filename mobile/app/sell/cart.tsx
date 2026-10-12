@@ -40,6 +40,8 @@ export default function CartScreen() {
   );
   const [customerPhone, setCustomerPhone] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'UPI' | 'CARD' | 'SPLIT'>('CASH');
+  const [paymentModeType, setPaymentModeType] = useState<'FULL' | 'CREDIT' | 'PARTIAL'>('FULL');
+  const [partialPaidNow, setPartialPaidNow] = useState('');
   const [upiReference, setUpiReference] = useState('');
   const [cashAmount, setCashAmount] = useState('');
   const [digitalAmount, setDigitalAmount] = useState('');
@@ -59,6 +61,14 @@ export default function CartScreen() {
 
     try {
       setIsSubmitting(true);
+      const isCredit = paymentModeType === 'CREDIT' || paymentModeType === 'PARTIAL';
+      const paidNow =
+        paymentModeType === 'FULL'
+          ? grandTotal
+          : paymentModeType === 'PARTIAL'
+          ? Number(partialPaidNow || 0)
+          : 0;
+
       const payload = {
         customerType,
         customerName: customerName.trim() || 'Walk-in Customer',
@@ -74,10 +84,13 @@ export default function CartScreen() {
           method: paymentMethod,
           upiReference: upiReference.trim(),
           notes: notes.trim(),
-          cashAmount: paymentMethod === 'SPLIT' ? Number(cashAmount || 0) : undefined,
-          digitalAmount: paymentMethod === 'SPLIT' ? Number(digitalAmount || 0) : undefined,
+          cashAmount: paymentMethod === 'SPLIT' ? Number(cashAmount || 0) : (paymentMethod === 'CASH' ? paidNow : 0),
+          digitalAmount: paymentMethod === 'SPLIT' ? Number(digitalAmount || 0) : ((paymentMethod === 'UPI' || paymentMethod === 'CARD') ? paidNow : 0),
         },
         idempotencyKey,
+        isCreditSale: isCredit,
+        creditAmount: isCredit ? Math.max(0, grandTotal - paidNow) : 0,
+        paymentStatus: isCredit ? (paidNow === 0 ? 'PENDING' : 'SPLIT') : 'PAID',
       };
 
       const res = await apiClient.post('/sales', payload);
@@ -199,7 +212,89 @@ export default function CartScreen() {
 
         {/* Payment Method Selector */}
         <Card style={styles.roundedCard}>
-          <Text style={styles.cardHeading}>{t('paymentMethod')}</Text>
+          <Text style={styles.cardHeading}>{language === 'te' ? 'చెల్లింపు రకం' : 'Payment Type'}</Text>
+          
+          {/* Full / Credit / Partial Toggle */}
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+            <TouchableOpacity
+              style={[
+                styles.paymentMethodBtn,
+                paymentModeType === 'FULL' && styles.activePaymentMethod,
+              ]}
+              onPress={() => setPaymentModeType('FULL')}
+            >
+              <Text
+                style={[
+                  styles.paymentMethodText,
+                  paymentModeType === 'FULL' && styles.activePaymentMethodText,
+                ]}
+              >
+                {language === 'te' ? 'పూర్తి చెల్లింపు' : 'Full Payment'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.paymentMethodBtn,
+                paymentModeType === 'CREDIT' && { backgroundColor: '#DC2626' },
+              ]}
+              onPress={() => setPaymentModeType('CREDIT')}
+            >
+              <Text
+                style={[
+                  styles.paymentMethodText,
+                  paymentModeType === 'CREDIT' && { color: Colors.white, fontWeight: '700' },
+                ]}
+              >
+                {language === 'te' ? 'ఉద్దెర / ఖాతా' : 'Credit (Khata)'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.paymentMethodBtn,
+                paymentModeType === 'PARTIAL' && { backgroundColor: '#D97706' },
+              ]}
+              onPress={() => setPaymentModeType('PARTIAL')}
+            >
+              <Text
+                style={[
+                  styles.paymentMethodText,
+                  paymentModeType === 'PARTIAL' && { color: Colors.white, fontWeight: '700' },
+                ]}
+              >
+                {language === 'te' ? 'కొంత బాకీ' : 'Partial'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {paymentModeType === 'PARTIAL' && (
+            <View style={{ marginBottom: 12 }}>
+              <Input
+                label={language === 'te' ? 'ఇప్పుడు చెల్లించిన మొత్తం (₹)' : 'Paid Now Amount (₹)'}
+                value={partialPaidNow}
+                onChangeText={setPartialPaidNow}
+                placeholder="0.00"
+                keyboardType="numeric"
+              />
+              <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '600', marginTop: 2 }}>
+                {language === 'te' ? 'మిగిలిన మొత్తం ఖాతాలో రికార్డ్ అవుతుంది: ₹' : 'Remaining will be recorded in customer Khata: ₹'}
+                {Math.max(0, grandTotal - (parseFloat(partialPaidNow) || 0))}
+              </Text>
+            </View>
+          )}
+
+          {paymentModeType === 'CREDIT' && (
+            <View style={{ backgroundColor: '#FEF2F2', padding: 10, borderRadius: 12, marginBottom: 12 }}>
+              <Text style={{ fontSize: 12, color: '#991B1B', fontWeight: '600' }}>
+                {language === 'te'
+                  ? 'మొత్తం ₹' + grandTotal + ' కస్టమర్ బాహీ ఖాతాలో ఉద్దెరగా నమోదవుతుంది.'
+                  : 'Full ₹' + grandTotal + ' will be added to customer Khata as receivable.'}
+              </Text>
+            </View>
+          )}
+
+          <Text style={[styles.cardHeading, { marginTop: 4 }]}>{t('paymentMethod')}</Text>
           <View style={styles.paymentMethodsRow}>
             {(['CASH', 'UPI', 'CARD', 'SPLIT'] as const).map((method) => {
               const labelMap: Record<string, string> = {

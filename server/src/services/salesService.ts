@@ -3,6 +3,8 @@ import { Product } from '../models/Product';
 import { consumeFifoBatchesForSale, recordInventoryMovement } from './inventoryService';
 import { roundMoney } from '../utils/money';
 import { logAudit } from './auditService';
+import { findOrCreateAccountForCustomer, postLedgerTransaction } from './khataService';
+import { Payment } from '../models/Payment';
 
 export interface CreateSaleLineInput {
   productId: string;
@@ -23,6 +25,10 @@ export interface CreateSaleInput {
   overallDiscount?: number;
   paymentDetails: IPaymentDetails;
   idempotencyKey?: string;
+  isCreditSale?: boolean;
+  paymentStatus?: 'PAID' | 'PENDING' | 'SPLIT';
+  creditAmount?: number;
+  dueDate?: Date | string;
 }
 
 export async function generateSaleNumber(storeId: string): Promise<string> {
@@ -52,6 +58,10 @@ export async function createSale(input: CreateSaleInput): Promise<ISale> {
     overallDiscount = 0,
     paymentDetails,
     idempotencyKey,
+    isCreditSale = false,
+    paymentStatus: explicitPaymentStatus,
+    creditAmount = 0,
+    dueDate,
   } = input;
 
   if (!lineItems || lineItems.length === 0) {
@@ -148,7 +158,33 @@ export async function createSale(input: CreateSaleInput): Promise<ISale> {
 
   // Validate payment details
   const method = paymentDetails.method || 'CASH';
-  const paymentStatus = paymentDetails.notes?.includes('Pending') ? 'PENDING' : 'PAID';
+  const isFullCredit = isCreditSale && (!paymentDetails.cashAmount && !paymentDetails.digitalAmount);
+  const cashAmount =
+    paymentDetails.cashAmount !== undefined
+      ? paymentDetails.cashAmount
+      : method === 'CASH' && !isFullCredit
+      ? finalTotal
+      : 0;
+  const digitalAmount =
+    paymentDetails.digitalAmount !== undefined
+      ? paymentDetails.digitalAmount
+      : (method === 'UPI' || method === 'CARD') && !isFullCredit
+      ? finalTotal
+      : 0;
+  const totalPaidNow = roundMoney(cashAmount + digitalAmount);
+
+  let paymentStatus: 'PAID' | 'PENDING' | 'SPLIT' = 'PAID';
+  if (explicitPaymentStatus) {
+    paymentStatus = explicitPaymentStatus;
+  } else if (isCreditSale || creditAmount > 0) {
+    if (totalPaidNow === 0 || creditAmount >= finalTotal) {
+      paymentStatus = 'PENDING';
+    } else {
+      paymentStatus = 'SPLIT';
+    }
+  } else if (paymentDetails.notes?.includes('Pending')) {
+    paymentStatus = 'PENDING';
+  }
 
   const sale = await Sale.create({
     storeId,
@@ -168,8 +204,8 @@ export async function createSale(input: CreateSaleInput): Promise<ISale> {
       method,
       upiReference: paymentDetails.upiReference || '',
       notes: paymentDetails.notes || '',
-      cashAmount: paymentDetails.cashAmount || (method === 'CASH' ? finalTotal : 0),
-      digitalAmount: paymentDetails.digitalAmount || (method === 'UPI' || method === 'CARD' ? finalTotal : 0),
+      cashAmount,
+      digitalAmount,
     },
     status: 'COMPLETED',
     idempotencyKey,
@@ -189,8 +225,71 @@ export async function createSale(input: CreateSaleInput): Promise<ISale> {
       total: finalTotal,
       itemsCount: processedLines.length,
       estimatedGrossProfit,
+      paymentStatus,
     },
   });
 
+  // Khata Book Integration: If credit sale, post to customer ledger
+  try {
+    if (isCreditSale || creditAmount > 0 || paymentStatus !== 'PAID') {
+      const customerAccount = await findOrCreateAccountForCustomer(
+        storeId,
+        customerName,
+        customerPhone,
+        userId
+      );
+
+      // 1. Post Credit Sale on Ledger
+      await postLedgerTransaction({
+        storeId,
+        accountId: customerAccount._id.toString(),
+        transactionType: 'CREDIT_SALE',
+        amount: finalTotal,
+        transactionDate: new Date(),
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        referenceType: 'Sale',
+        referenceId: sale._id,
+        invoiceNumber: saleNumber,
+        notes: `Credit Sale #${saleNumber} (${customerType})`,
+        userId,
+        userName,
+      });
+
+      // 2. If customer paid a portion now, record payment received
+      if (totalPaidNow > 0) {
+        await Payment.create({
+          storeId,
+          accountId: customerAccount._id,
+          paymentDirection: 'INCOMING',
+          amount: totalPaidNow,
+          method: method as any,
+          referenceNumber: saleNumber,
+          paymentDate: new Date(),
+          allocations: [{ invoiceReference: saleNumber, allocatedAmount: totalPaidNow, referenceId: sale._id }],
+          notes: `Partial payment received during checkout for #${saleNumber}`,
+          createdBy: userId,
+        });
+
+        await postLedgerTransaction({
+          storeId,
+          accountId: customerAccount._id.toString(),
+          transactionType: 'PAYMENT_RECEIVED',
+          amount: totalPaidNow,
+          transactionDate: new Date(),
+          referenceType: 'Payment',
+          referenceId: sale._id,
+          invoiceNumber: saleNumber,
+          paymentMethod: method as any,
+          notes: `Immediate payment received at checkout`,
+          userId,
+          userName,
+        });
+      }
+    }
+  } catch (khataError) {
+    console.warn('[Sale Khata] Error syncing credit sale to ledger:', khataError);
+  }
+
   return sale;
 }
+

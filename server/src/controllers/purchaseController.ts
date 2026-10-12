@@ -30,6 +30,7 @@ export const createPurchaseSchema = z.object({
     .optional(),
   overallDiscount: z.number().min(0).optional(),
   paymentStatus: z.enum(['PAID', 'PENDING', 'PARTIAL']).optional(),
+  amountPaidImmediately: z.number().min(0).optional(),
   notes: z.string().optional(),
   updateProductPrices: z.boolean().optional(),
 });
