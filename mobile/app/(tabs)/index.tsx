@@ -28,6 +28,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { useCart } from '../../src/context/CartContext';
 import { apiClient } from '../../src/api/client';
+import { khataApi } from '../../src/api/khata';
 import { Colors, Spacing } from '../../src/theme/colors';
 import { Header } from '../../src/components/Header';
 import { Card } from '../../src/components/Card';
@@ -66,6 +67,13 @@ export default function DashboardScreen() {
       const res = await apiClient.get('/products?active=true&limit=8');
       return res.data?.data || [];
     },
+    enabled: !!user,
+  });
+
+  // Khata overview query for homepage live card
+  const { data: khataData } = useQuery({
+    queryKey: ['khata-dashboard-summary'],
+    queryFn: khataApi.getDashboard,
     enabled: !!user,
   });
 
@@ -143,6 +151,55 @@ export default function DashboardScreen() {
           />
         }
       >
+        {/* Unmissable Digital Khata Book (Khatabook) Hero Banner */}
+        <TouchableOpacity
+          style={styles.khataHeroCard}
+          activeOpacity={0.9}
+          onPress={() => router.push('/(tabs)/khata')}
+        >
+          <View style={styles.khataHeroHeader}>
+            <View style={styles.khataHeroBadge}>
+              <BookOpen size={16} color="#FFFFFF" />
+              <Text style={styles.khataHeroBadgeText}>
+                {language === 'te' ? '📒 డిజిటల్ బాహీ ఖాతా • KHATABOOK' : '📒 DIGITAL KHATABOOK'}
+              </Text>
+            </View>
+            <View style={styles.khataOpenPill}>
+              <Text style={styles.khataOpenPillText}>
+                {language === 'te' ? 'ఓపెన్ చేయండి' : 'Open Khata'}
+              </Text>
+              <ArrowRight size={14} color="#15803D" />
+            </View>
+          </View>
+
+          <Text style={styles.khataHeroHeadline}>
+            {language === 'te'
+              ? 'కస్టమర్ ఉద్దెర & సప్లయర్ ఖాతా పుస్తకం'
+              : 'Customer Udhar & Supplier Khata Ledger'}
+          </Text>
+
+          {/* Live balances row */}
+          <View style={styles.khataStatsRow}>
+            <View style={styles.khataStatChipGreen}>
+              <Text style={styles.khataStatChipLabel}>
+                {language === 'te' ? 'రావాల్సిన బాకీలు (Receivables):' : 'Customers Owe Us:'}
+              </Text>
+              <Text style={styles.khataStatChipValueGreen}>
+                ₹{(khataData?.totalCustomerReceivables || 0).toLocaleString('en-IN')}
+              </Text>
+            </View>
+
+            <View style={styles.khataStatChipAmber}>
+              <Text style={styles.khataStatChipLabel}>
+                {language === 'te' ? 'మనం ఇవ్వాల్సినవి (Payables):' : 'We Owe Suppliers:'}
+              </Text>
+              <Text style={styles.khataStatChipValueAmber}>
+                ₹{(khataData?.totalSupplierPayables || 0).toLocaleString('en-IN')}
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
         {/* Promotional Cashback Hero Banner matching Reference Image */}
         <View style={styles.promoBanner}>
           <View style={styles.promoLeft}>
@@ -175,35 +232,6 @@ export default function DashboardScreen() {
             />
           </View>
         </View>
-
-        {/* Digital Khata Book Hero Card */}
-        <TouchableOpacity
-          style={styles.khataCard}
-          activeOpacity={0.88}
-          onPress={() => router.push('/khata/index' as any)}
-        >
-          <View style={styles.khataLeft}>
-            <View style={styles.khataBadge}>
-              <BookOpen size={14} color="#15803D" />
-              <Text style={styles.khataBadgeText}>
-                {language === 'te' ? 'డిజిటల్ బాహీ ఖాతా' : 'Digital Bahi Khata'}
-              </Text>
-            </View>
-            <Text style={styles.khataTitle}>
-              {language === 'te'
-                ? 'కస్టమర్ బాకీలు & సప్లయర్ లెడ్జర్'
-                : 'Customer Dues & Supplier Ledgers'}
-            </Text>
-            <Text style={styles.khataSub}>
-              {language === 'te'
-                ? 'ఉద్దెరలు, వసూళ్లు మరియు రిమైండర్లు చూడండి →'
-                : 'Track credit, payments & send reminders →'}
-            </Text>
-          </View>
-          <View style={styles.khataArrowBtn}>
-            <ArrowRight size={18} color={Colors.white} />
-          </View>
-        </TouchableOpacity>
 
         {/* Quick Operational Shortcuts */}
         <View style={styles.quickActionsContainer}>
@@ -532,65 +560,95 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  khataCard: {
-    backgroundColor: '#EAF6EF',
+  khataHeroCard: {
+    backgroundColor: '#164E3F',
     borderRadius: 22,
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
+    marginBottom: Spacing.md,
     shadowColor: '#103828',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 4,
+    borderWidth: 1.5,
+    borderColor: '#34D399',
   },
-  khataLeft: {
-    flex: 1,
-    paddingRight: 10,
+  khataHeroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  khataBadge: {
+  khataHeroBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#DCFCE7',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 6,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
-  khataBadgeText: {
+  khataHeroBadgeText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#F0FDF4',
+    letterSpacing: 0.5,
+  },
+  khataOpenPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  khataOpenPillText: {
     fontSize: 11,
     fontWeight: '800',
     color: '#15803D',
   },
-  khataTitle: {
-    fontSize: 15,
+  khataHeroHeadline: {
+    fontSize: 16,
     fontWeight: '800',
-    color: '#1F2937',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  khataStatsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  khataStatChipGreen: {
+    flex: 1,
+    backgroundColor: '#ECFDF5',
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  khataStatChipAmber: {
+    flex: 1,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  khataStatChipLabel: {
+    fontSize: 10.5,
+    color: '#4B5563',
+    fontWeight: '600',
     marginBottom: 2,
   },
-  khataSub: {
-    fontSize: 11.5,
-    color: '#4B5563',
-    fontWeight: '500',
+  khataStatChipValueGreen: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#15803D',
   },
-  khataArrowBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: Colors.dockBg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#103828',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+  khataStatChipValueAmber: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#B45309',
   },
   promoBtnText: {
     color: Colors.white,

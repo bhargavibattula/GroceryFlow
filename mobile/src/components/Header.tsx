@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Store, ShoppingBag, Globe } from 'lucide-react-native';
+import { Store, ShoppingBag, Globe, BookOpen } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Colors, Spacing } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
@@ -59,6 +59,16 @@ export const Header: React.FC<HeaderProps> = ({
             </Text>
           </TouchableOpacity>
         )}
+
+        {/* Khata Book Direct Shortcut */}
+        <TouchableOpacity
+          style={styles.khataIconBtn}
+          onPress={() => router.push('/khata/index' as any)}
+          activeOpacity={0.7}
+          accessibilityLabel="Khata Book"
+        >
+          <BookOpen size={18} color="#15803D" />
+        </TouchableOpacity>
 
         {/* Shopping bag with badge */}
         <TouchableOpacity
@@ -148,6 +158,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     color: Colors.darkForest,
+  },
+  khataIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
   },
   cartIconBtn: {
     width: 38,

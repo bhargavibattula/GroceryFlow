@@ -1,12 +1,12 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet, Platform } from 'react-native';
-import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings } from 'lucide-react-native';
+import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, BookOpen } from 'lucide-react-native';
 import { Colors } from '../../src/theme/colors';
 import { useLanguage } from '../../src/context/LanguageContext';
 
 export default function TabLayout() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <Tabs
@@ -19,8 +19,8 @@ export default function TabLayout() {
           borderRadius: 28,
           position: 'absolute',
           bottom: Platform.OS === 'ios' ? 24 : 14,
-          left: 16,
-          right: 16,
+          left: 12,
+          right: 12,
           height: 64,
           paddingBottom: 8,
           paddingTop: 8,
@@ -32,7 +32,7 @@ export default function TabLayout() {
           elevation: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 10.5,
+          fontSize: 10,
           fontWeight: '700',
         },
       }}
@@ -71,12 +71,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="reports"
+        name="khata"
         options={{
-          title: t('tabReports'),
+          title: language === 'te' ? 'బాహీ ఖాతా' : 'Khata',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={focused ? styles.activeTabIcon : null}>
-              <BarChart3 color={color} size={focused ? 22 : 20} />
+              <BookOpen color={color} size={focused ? 22 : 20} />
             </View>
           ),
         }}
@@ -90,6 +90,12 @@ export default function TabLayout() {
               <Settings color={color} size={focused ? 22 : 20} />
             </View>
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="reports"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

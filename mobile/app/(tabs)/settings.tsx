@@ -22,6 +22,8 @@ import {
   Store,
   Globe,
   Check,
+  BookOpen,
+  BarChart3,
 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { useLanguage } from '../../src/context/LanguageContext';
@@ -208,9 +210,35 @@ export default function SettingsScreen() {
 
         {/* General Management */}
         <Text style={styles.menuHeading}>
-          {language === 'te' ? 'అమ్మకాల నిర్వహణ' : 'Operations'}
+          {language === 'te' ? 'అమ్మకాలు & ఖాతా పుస్తకం' : 'Operations & Khata'}
         </Text>
         <Card style={styles.menuCard}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/khata/index' as any)}
+          >
+            <View style={styles.menuLeft}>
+              <BookOpen size={18} color="#15803D" />
+              <Text style={styles.menuText}>
+                {language === 'te' ? 'డిజిటల్ బాహీ ఖాతా (Khatabook)' : 'Digital Bahi Khata (Khatabook)'}
+              </Text>
+            </View>
+            <ChevronRight size={18} color={Colors.secondaryText} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/reports')}
+          >
+            <View style={styles.menuLeft}>
+              <BarChart3 size={18} color={Colors.darkForest} />
+              <Text style={styles.menuText}>
+                {language === 'te' ? 'సేల్స్ రిపోర్టులు & విశ్లేషణ' : 'Store Analytics & Reports'}
+              </Text>
+            </View>
+            <ChevronRight size={18} color={Colors.secondaryText} />
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.menuItem, { borderBottomWidth: 0 }]}
             onPress={() => router.push('/sales/history')}
