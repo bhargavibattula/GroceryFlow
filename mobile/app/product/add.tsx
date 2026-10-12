@@ -10,8 +10,9 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calculator, Check } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, PlusCircle } from 'lucide-react-native';
 import { apiClient } from '../../src/api/client';
+import { useLanguage } from '../../src/context/LanguageContext';
 import { Colors, Spacing } from '../../src/theme/colors';
 import { Card } from '../../src/components/Card';
 import { Input } from '../../src/components/Input';
@@ -21,6 +22,7 @@ import { formatCurrency } from '../../src/utils/format';
 export default function AddProductScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { language, t } = useLanguage();
 
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
@@ -67,7 +69,12 @@ export default function AddProductScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products-list'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
-      Alert.alert('Success', 'New product added with dual pricing.');
+      Alert.alert(
+        language === 'te' ? 'విజయవంతమైంది' : 'Success',
+        language === 'te'
+          ? 'కొత్త సరుకు డ్యూయల్ ధరలతో విజయవంతంగా చేర్చబడింది.'
+          : 'New product added with dual pricing.'
+      );
       router.back();
     },
     onError: (err: any) => {
@@ -77,7 +84,12 @@ export default function AddProductScreen() {
 
   const handleSubmit = () => {
     if (!name.trim() || !sku.trim() || !baseUnit.trim()) {
-      Alert.alert('Validation Error', 'Product Name, SKU, and Base Unit are required.');
+      Alert.alert(
+        'Validation Error',
+        language === 'te'
+          ? 'సరుకు పేరు, SKU మరియు యూనిట్ నమోదు చేయండి.'
+          : 'Product Name, SKU, and Base Unit are required.'
+      );
       return;
     }
 
@@ -105,32 +117,54 @@ export default function AddProductScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.backCircle} onPress={() => router.back()}>
+          <ArrowLeft size={20} color={Colors.darkForest} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {language === 'te' ? 'కొత్త సరుకును చేర్చండి' : 'Add New Product'}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Card>
-          <Text style={styles.sectionTitle}>Product Details</Text>
+        {/* Core Product Information Card */}
+        <Card style={styles.formCard}>
+          <Text style={styles.sectionHeading}>
+            {language === 'te' ? 'సరుకు ప్రాథమిక వివరాలు' : 'Basic Product Information'}
+          </Text>
+
           <Input
-            label="Product Name *"
+            label={language === 'te' ? 'సరుకు పేరు' : 'Product Name'}
             value={name}
             onChangeText={setName}
-            placeholder="e.g. Sona Masoori Rice (Raw)"
+            placeholder={language === 'te' ? 'ఉదా. సోనా మసూరి బియ్యం' : 'e.g. Sona Masoori Rice'}
           />
-          <Input
-            label="Unique SKU Code *"
-            value={sku}
-            onChangeText={setSku}
-            placeholder="e.g. RICE-SONA-02"
-            autoCapitalize="characters"
-          />
-          <Input
-            label="Brand / Variety (Optional)"
-            value={brand}
-            onChangeText={setBrand}
-            placeholder="e.g. Kurnool Special"
-          />
-          <View style={styles.unitRow}>
+
+          <View style={styles.twoCol}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Input
-                label="Base Stock Unit *"
+                label="SKU Code"
+                value={sku}
+                onChangeText={setSku}
+                placeholder="RICE-SONA-25"
+                autoCapitalize="characters"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Input
+                label={language === 'te' ? 'బ్రాండ్' : 'Brand (Optional)'}
+                value={brand}
+                onChangeText={setBrand}
+                placeholder="Heritage"
+              />
+            </View>
+          </View>
+
+          <View style={styles.twoCol}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Input
+                label={language === 'te' ? 'యూనిట్' : 'Base Unit'}
                 value={baseUnit}
                 onChangeText={setBaseUnit}
                 placeholder="kg, litre, packet"
@@ -138,79 +172,96 @@ export default function AddProductScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Input
-                label="Low-Stock Alert Level"
+                label={language === 'te' ? 'అలర్ట్ స్థాయి' : 'Alert Level (Min Stock)'}
                 value={lowStockThreshold}
                 onChangeText={setLowStockThreshold}
+                placeholder="20"
                 keyboardType="numeric"
               />
             </View>
           </View>
         </Card>
 
-        <Card>
-          <Text style={styles.sectionTitle}>Initial Stock & Acquisition Cost</Text>
-          <View style={styles.unitRow}>
+        {/* Initial Stock & Cost Basis */}
+        <Card style={styles.formCard}>
+          <Text style={styles.sectionHeading}>
+            {language === 'te' ? 'ప్రారంభ స్టాక్ & కొనుగోలు ధర' : 'Initial Stock & Cost Basis'}
+          </Text>
+
+          <View style={styles.twoCol}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Input
-                label="Initial Quantity"
+                label={language === 'te' ? 'ప్రారంభ స్టాక్' : 'Opening Stock Qty'}
                 value={initialQuantity}
                 onChangeText={setInitialQuantity}
+                placeholder="100"
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1 }}>
               <Input
-                label="Cost Basis Per Unit (₹)"
+                label={language === 'te' ? 'కొనుగోలు ధర (ల్యాండెడ్ కాస్ట్)' : 'Cost Price / Landed (₹)'}
                 value={initialCostBasis}
                 onChangeText={setInitialCostBasis}
+                placeholder="50"
                 keyboardType="numeric"
               />
             </View>
           </View>
         </Card>
 
-        {/* Pricing Strategy Engine */}
-        <Card>
-          <Text style={styles.sectionTitle}>Dual-Pricing Strategy</Text>
-          <View style={styles.methodSelector}>
-            {(['COST_PLUS_MARKUP', 'TARGET_GROSS_MARGIN', 'FIXED'] as const).map((method) => (
-              <TouchableOpacity
-                key={method}
-                style={[
-                  styles.methodBtn,
-                  pricingMethod === method && styles.activeMethodBtn,
-                ]}
-                onPress={() => setPricingMethod(method)}
-              >
-                <Text
+        {/* Dual-Pricing Strategy Selector */}
+        <Card style={styles.formCard}>
+          <Text style={styles.sectionHeading}>
+            {language === 'te' ? 'డ్యూయల్-ధరల వ్యూహం' : 'Dual-Pricing Strategy'}
+          </Text>
+
+          <View style={styles.methodPillRow}>
+            {(['COST_PLUS_MARKUP', 'TARGET_GROSS_MARGIN', 'FIXED'] as const).map((method) => {
+              const labelMap: Record<string, string> = {
+                COST_PLUS_MARKUP: language === 'te' ? 'కాస్ట్-ప్లస్' : 'Markup %',
+                TARGET_GROSS_MARGIN: language === 'te' ? 'మార్జిన్ %' : 'Margin %',
+                FIXED: language === 'te' ? 'ఫిక్స్‌డ్' : 'Fixed',
+              };
+              return (
+                <TouchableOpacity
+                  key={method}
                   style={[
-                    styles.methodBtnText,
-                    pricingMethod === method && styles.activeMethodBtnText,
+                    styles.methodBtn,
+                    pricingMethod === method && styles.activeMethodBtn,
                   ]}
+                  onPress={() => setPricingMethod(method)}
                 >
-                  {method === 'COST_PLUS_MARKUP' && 'Cost-Plus Markup'}
-                  {method === 'TARGET_GROSS_MARGIN' && 'Gross Margin %'}
-                  {method === 'FIXED' && 'Fixed Price'}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.methodText,
+                      pricingMethod === method && styles.activeMethodText,
+                    ]}
+                  >
+                    {labelMap[method]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {pricingMethod === 'COST_PLUS_MARKUP' && (
-            <View style={styles.inputsRow}>
+            <View style={styles.twoCol}>
               <View style={{ flex: 1, marginRight: 8 }}>
                 <Input
-                  label="Reseller Markup %"
+                  label={language === 'te' ? 'హోల్‌సేల్ మార్కప్ (%)' : 'Wholesale Markup (%)'}
                   value={resellerMarkup}
                   onChangeText={setResellerMarkup}
+                  placeholder="12"
                   keyboardType="numeric"
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <Input
-                  label="Retail Markup %"
+                  label={language === 'te' ? 'రిటైల్ మార్కప్ (%)' : 'Retail Markup (%)'}
                   value={retailMarkup}
                   onChangeText={setRetailMarkup}
+                  placeholder="25"
                   keyboardType="numeric"
                 />
               </View>
@@ -218,21 +269,22 @@ export default function AddProductScreen() {
           )}
 
           {pricingMethod === 'TARGET_GROSS_MARGIN' && (
-            <View style={styles.inputsRow}>
+            <View style={styles.twoCol}>
               <View style={{ flex: 1, marginRight: 8 }}>
                 <Input
-                  label="Reseller Margin %"
+                  label={language === 'te' ? 'హోల్‌సేల్ మార్జిన్ (%)' : 'Wholesale Margin (%)'}
                   value={resellerMargin}
                   onChangeText={setResellerMargin}
+                  placeholder="10"
                   keyboardType="numeric"
-                  helper="Must be < 100%"
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <Input
-                  label="Retail Margin %"
+                  label={language === 'te' ? 'రిటైల్ మార్జిన్ (%)' : 'Retail Margin (%)'}
                   value={retailMargin}
                   onChangeText={setRetailMargin}
+                  placeholder="20"
                   keyboardType="numeric"
                 />
               </View>
@@ -240,61 +292,72 @@ export default function AddProductScreen() {
           )}
 
           {pricingMethod === 'FIXED' && (
-            <View style={styles.inputsRow}>
+            <View style={styles.twoCol}>
               <View style={{ flex: 1, marginRight: 8 }}>
                 <Input
-                  label="Fixed Reseller Price (₹)"
+                  label={language === 'te' ? 'హోల్‌సేల్ ధర (₹)' : 'Fixed Wholesale (₹)'}
                   value={manualReseller}
                   onChangeText={setManualReseller}
+                  placeholder="55.00"
                   keyboardType="numeric"
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <Input
-                  label="Fixed Retail Price (₹)"
+                  label={language === 'te' ? 'రిటైల్ ధర (₹)' : 'Fixed Retail (₹)'}
                   value={manualRetail}
                   onChangeText={setManualRetail}
+                  placeholder="62.50"
                   keyboardType="numeric"
                 />
               </View>
             </View>
           )}
 
-          {/* Live Preview Card */}
-          <View style={styles.previewBox}>
-            <View style={styles.previewHeader}>
-              <Calculator size={16} color={Colors.primary} />
-              <Text style={styles.previewTitle}>Calculated Selling Prices Preview</Text>
+          {/* Live Preview Pill Card */}
+          <View style={styles.previewCard}>
+            <View style={styles.previewTitleRow}>
+              <Sparkles size={16} color={Colors.primary} />
+              <Text style={styles.previewTitle}>
+                {language === 'te' ? 'లైవ్ ధరల ప్రివ్యూ' : 'Live Dual-Pricing Preview'}
+              </Text>
             </View>
 
-            <View style={styles.previewValuesRow}>
-              <View style={styles.previewCol}>
-                <Text style={styles.previewColLabel}>Reseller Price</Text>
-                <Text style={styles.previewColVal}>{formatCurrency(previewReseller)}</Text>
-                <Text style={styles.previewProfit}>
-                  Profit: {formatCurrency(previewReseller - cost)}
+            <View style={styles.previewPricesRow}>
+              <View style={styles.previewBox}>
+                <Text style={styles.previewLabel}>{t('resellerPrice')}</Text>
+                <Text style={styles.previewVal}>
+                  {formatCurrency(previewReseller)}
+                  <Text style={styles.previewUnit}>/{baseUnit}</Text>
                 </Text>
               </View>
 
-              <View style={styles.previewDivider} />
-
-              <View style={styles.previewCol}>
-                <Text style={styles.previewColLabel}>Retail Price</Text>
-                <Text style={styles.previewColVal}>{formatCurrency(previewRetail)}</Text>
-                <Text style={styles.previewProfit}>
-                  Profit: {formatCurrency(previewRetail - cost)}
+              <View style={styles.previewBox}>
+                <Text style={styles.previewLabel}>{t('retailPrice')}</Text>
+                <Text style={styles.previewVal}>
+                  {formatCurrency(previewRetail)}
+                  <Text style={styles.previewUnit}>/{baseUnit}</Text>
                 </Text>
               </View>
             </View>
           </View>
         </Card>
 
+        {/* Submit Button */}
         <Button
-          title="Save Product & Pricing"
+          title={
+            mutation.isPending
+              ? language === 'te'
+                ? 'సేవ్ అవుతోంది...'
+                : 'Saving Product...'
+              : language === 'te'
+              ? 'సరుకును నమోదు చేయండి'
+              : 'Save & Publish Product'
+          }
           onPress={handleSubmit}
           loading={mutation.isPending}
           size="lg"
-          style={{ marginTop: Spacing.sm }}
+          style={styles.submitBtn}
         />
       </ScrollView>
     </SafeAreaView>
@@ -304,28 +367,52 @@ export default function AddProductScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.lightMint,
+    backgroundColor: Colors.mintBackground,
+  },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 12,
+  },
+  backCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.borders,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: Colors.darkForest,
   },
   scrollContent: {
     padding: Spacing.lg,
     paddingBottom: 40,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+  formCard: {
+    borderRadius: 22,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  sectionHeading: {
+    fontSize: 14.5,
+    fontWeight: '800',
     color: Colors.darkForest,
     marginBottom: Spacing.md,
   },
-  unitRow: {
+  twoCol: {
     flexDirection: 'row',
   },
-  inputsRow: {
+  methodPillRow: {
     flexDirection: 'row',
-  },
-  methodSelector: {
-    flexDirection: 'row',
-    backgroundColor: Colors.veryLightMint,
-    borderRadius: 12,
+    backgroundColor: '#F3F8F5',
+    borderRadius: 18,
     padding: 4,
     marginBottom: Spacing.md,
     gap: 4,
@@ -333,67 +420,71 @@ const styles = StyleSheet.create({
   methodBtn: {
     flex: 1,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   activeMethodBtn: {
-    backgroundColor: Colors.darkForest,
+    backgroundColor: Colors.primary,
   },
-  methodBtnText: {
-    fontSize: 11,
+  methodText: {
+    fontSize: 12,
     fontWeight: '700',
     color: Colors.secondaryText,
   },
-  activeMethodBtnText: {
+  activeMethodText: {
     color: Colors.white,
+    fontWeight: '800',
   },
-  previewBox: {
-    backgroundColor: '#EBF4F0',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 8,
+  previewCard: {
+    backgroundColor: '#EAF7EE',
+    borderRadius: 18,
+    padding: 14,
+    marginTop: 4,
     borderWidth: 1,
-    borderColor: '#CDE5D6',
+    borderColor: '#C8E8D5',
   },
-  previewHeader: {
+  previewTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginBottom: 8,
   },
   previewTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.darkForest,
-  },
-  previewValuesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  previewCol: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  previewDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: Colors.borders,
-  },
-  previewColLabel: {
-    fontSize: 11,
-    color: Colors.secondaryText,
-    fontWeight: '600',
-  },
-  previewColVal: {
-    fontSize: 16,
+    fontSize: 12.5,
     fontWeight: '800',
+    color: Colors.primary,
+  },
+  previewPricesRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  previewBox: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 10,
+    alignItems: 'center',
+  },
+  previewLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.secondaryText,
+  },
+  previewVal: {
+    fontSize: 16,
+    fontWeight: '900',
     color: Colors.darkForest,
     marginTop: 2,
   },
-  previewProfit: {
+  previewUnit: {
     fontSize: 11,
-    color: Colors.success,
     fontWeight: '600',
-    marginTop: 2,
+    color: Colors.secondaryText,
+  },
+  submitBtn: {
+    marginTop: Spacing.sm,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
   },
 });

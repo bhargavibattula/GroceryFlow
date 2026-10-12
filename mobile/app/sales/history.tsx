@@ -11,16 +11,17 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import { Search, RotateCcw, FileText, ArrowRight } from 'lucide-react-native';
+import { Search, RotateCcw, FileText, ArrowLeft } from 'lucide-react-native';
 import { apiClient } from '../../src/api/client';
+import { useLanguage } from '../../src/context/LanguageContext';
 import { Colors, Spacing } from '../../src/theme/colors';
-import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
 import { EmptyState } from '../../src/components/EmptyState';
 import { formatCurrency, formatDate } from '../../src/utils/format';
 
 export default function SalesHistoryScreen() {
   const router = useRouter();
+  const { language, t } = useLanguage();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'RESELLER' | 'RETAIL'>('ALL');
 
@@ -34,57 +35,79 @@ export default function SalesHistoryScreen() {
     },
   });
 
-  const renderSale = ({ item }: { item: any }) => (
-    <Card style={styles.card}>
-      <View style={styles.topRow}>
-        <View>
-          <Text style={styles.saleNumber}>{item.saleNumber}</Text>
-          <Text style={styles.customerText}>
-            {item.customerName || 'Walk-in'} • {formatDate(item.createdAt)}
-          </Text>
+  const renderSale = ({ item, index }: { item: any; index: number }) => {
+    const tint = Colors.cardTints[index % Colors.cardTints.length];
+
+    return (
+      <View style={[styles.card, { backgroundColor: tint }]}>
+        <View style={styles.topRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.saleNumber}>{item.saleNumber}</Text>
+            <Text style={styles.customerText}>
+              {item.customerName || (language === 'te' ? 'కౌంటర్ కస్టమర్' : 'Walk-in')} • {formatDate(item.createdAt)}
+            </Text>
+          </View>
+          <Badge
+            label={item.customerType === 'RESELLER' ? t('reseller') : t('retail')}
+            variant={item.customerType === 'RESELLER' ? 'reseller' : 'retail'}
+          />
         </View>
-        <Badge
-          label={item.customerType}
-          variant={item.customerType === 'RESELLER' ? 'reseller' : 'retail'}
-        />
-      </View>
 
-      {/* Items count & Payment Method */}
-      <View style={styles.detailsRow}>
-        <Text style={styles.detailsText}>
-          {item.lineItems?.length || 0} product(s) • Paid via {item.paymentDetails?.method || 'CASH'}
-        </Text>
-        <Text style={styles.totalText}>{formatCurrency(item.total)}</Text>
-      </View>
+        {/* Items count & Payment Method */}
+        <View style={styles.detailsRow}>
+          <Text style={styles.detailsText}>
+            {item.lineItems?.length || 0} {language === 'te' ? 'సరుకులు' : 'items'} • {item.paymentDetails?.method || 'CASH'}
+          </Text>
+          <Text style={styles.totalText}>{formatCurrency(item.total)}</Text>
+        </View>
 
-      {/* Action shortcuts */}
-      <View style={styles.actionRow}>
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => router.push({ pathname: '/sell/receipt', params: { saleId: item._id } })}
-        >
-          <FileText size={14} color={Colors.primary} />
-          <Text style={styles.actionBtnText}>View Receipt</Text>
-        </TouchableOpacity>
+        {/* Action shortcuts */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => router.push({ pathname: '/sell/receipt', params: { saleId: item._id } })}
+          >
+            <FileText size={14} color={Colors.primary} />
+            <Text style={styles.actionBtnText}>
+              {language === 'te' ? 'రసీదు చూడండి' : 'View Receipt'}
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionBtn, { marginLeft: 12 }]}
-          onPress={() => router.push({ pathname: '/returns/new', params: { saleId: item._id } })}
-        >
-          <RotateCcw size={14} color="#A2591F" />
-          <Text style={[styles.actionBtnText, { color: '#A2591F' }]}>Process Return</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.returnBtn]}
+            onPress={() => router.push({ pathname: '/returns/new', params: { saleId: item._id } })}
+          >
+            <RotateCcw size={14} color="#A2591F" />
+            <Text style={[styles.actionBtnText, { color: '#A2591F' }]}>
+              {language === 'te' ? 'రిటర్న్ ప్రాసెస్' : 'Return'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </Card>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.backCircle} onPress={() => router.back()}>
+          <ArrowLeft size={20} color={Colors.darkForest} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {language === 'te' ? 'అమ్మకాల చరిత్ర & రసీదులు' : 'Sales History & Bills'}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <View style={styles.searchContainer}>
         <Search size={18} color={Colors.secondaryText} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by sale number or customer name..."
+          placeholder={
+            language === 'te'
+              ? 'బిల్లు నంబర్ లేదా కస్టమర్ పేరు వెతకండి...'
+              : 'Search by bill number or customer name...'
+          }
           placeholderTextColor="#9EA8A1"
           value={search}
           onChangeText={setSearch}
@@ -93,19 +116,24 @@ export default function SalesHistoryScreen() {
 
       {/* Customer Type Filters */}
       <View style={styles.filterRow}>
-        {(['ALL', 'RESELLER', 'RETAIL'] as const).map((type) => (
-          <TouchableOpacity
-            key={type}
-            style={[styles.chip, typeFilter === type && styles.activeChip]}
-            onPress={() => setTypeFilter(type)}
-          >
-            <Text style={[styles.chipText, typeFilter === type && styles.activeChipText]}>
-              {type === 'ALL' && 'All Sales'}
-              {type === 'RESELLER' && '🏢 Reseller Sales'}
-              {type === 'RETAIL' && '🛍️ Retail Sales'}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {(['ALL', 'RESELLER', 'RETAIL'] as const).map((type) => {
+          const labelMap: Record<string, string> = {
+            ALL: language === 'te' ? 'అన్ని బిల్లులు' : 'All Sales',
+            RESELLER: `🏢 ${t('reseller')}`,
+            RETAIL: `🛍️ ${t('retail')}`,
+          };
+          return (
+            <TouchableOpacity
+              key={type}
+              style={[styles.chip, typeFilter === type && styles.activeChip]}
+              onPress={() => setTypeFilter(type)}
+            >
+              <Text style={[styles.chipText, typeFilter === type && styles.activeChipText]}>
+                {labelMap[type]}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <FlatList
@@ -119,8 +147,14 @@ export default function SalesHistoryScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <EmptyState
-              title="No Sales Found"
-              description="No sales match your search and filter criteria."
+              title={language === 'te' ? 'అమ్మకాలు లేవు' : 'No Sales Found'}
+              description={
+                language === 'te'
+                  ? 'ఈ ఫిల్టర్ కింద ఎలాంటి అమ్మకాలు నమోదు కాలేదు.'
+                  : 'No sales match your current search or filter criteria.'
+              }
+              actionTitle={language === 'te' ? 'కొత్త సేల్ చేయండి' : 'Start a Sale'}
+              onActionPress={() => router.push('/(tabs)/sell')}
             />
           ) : null
         }
@@ -132,19 +166,40 @@ export default function SalesHistoryScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.lightMint,
+    backgroundColor: Colors.mintBackground,
+  },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 12,
+  },
+  backCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.borders,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: Colors.darkForest,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.white,
     marginHorizontal: Spacing.lg,
-    marginTop: Spacing.md,
-    borderRadius: 14,
+    borderRadius: 18,
     paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: Colors.borders,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   searchIcon: {
     marginRight: 8,
@@ -152,19 +207,19 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     paddingVertical: 10,
-    fontSize: 14,
+    fontSize: 13.5,
     color: Colors.mainText,
   },
   filterRow: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
     gap: 8,
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
     backgroundColor: Colors.white,
     borderWidth: 1,
     borderColor: Colors.borders,
@@ -175,7 +230,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.secondaryText,
   },
   activeChipText: {
@@ -186,8 +241,16 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
+    borderRadius: 24,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
+    borderWidth: 1,
+    borderColor: '#E6EFE9',
+    shadowColor: '#102A20',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   topRow: {
     flexDirection: 'row',
@@ -197,7 +260,7 @@ const styles = StyleSheet.create({
   },
   saleNumber: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '900',
     color: Colors.darkForest,
   },
   customerText: {
@@ -209,32 +272,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    backgroundColor: '#FFFFFF99',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginVertical: 6,
   },
   detailsText: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: Colors.secondaryText,
+    fontWeight: '600',
   },
   totalText: {
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '900',
     color: Colors.darkForest,
   },
   actionRow: {
     flexDirection: 'row',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borders,
+    paddingTop: 6,
+    gap: 8,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    backgroundColor: Colors.white,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0EAE4',
+    gap: 6,
+  },
+  returnBtn: {
+    borderColor: '#F6E4CA',
   },
   actionBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11.5,
+    fontWeight: '800',
     color: Colors.primary,
   },
 });

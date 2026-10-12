@@ -11,17 +11,17 @@ export const Badge: React.FC<BadgeProps> = ({ label, variant = 'neutral' }) => {
   const getColors = () => {
     switch (variant) {
       case 'reseller':
-        return { bg: '#E2F1EC', text: Colors.darkForest };
+        return { bg: '#E4F4EB', text: Colors.darkForest };
       case 'retail':
-        return { bg: '#FDEEE0', text: '#A2591F' };
+        return { bg: '#FDF1E6', text: '#A2591F' };
       case 'success':
-        return { bg: '#E4F6EB', text: Colors.success };
+        return { bg: '#E4F7EC', text: Colors.success };
       case 'warning':
-        return { bg: '#FEF4E5', text: Colors.warning };
+        return { bg: '#FEF5E7', text: '#B46200' };
       case 'error':
-        return { bg: '#FDEAEB', text: Colors.error };
+        return { bg: '#FDECEF', text: Colors.error };
       default:
-        return { bg: '#ECEFEA', text: Colors.secondaryText };
+        return { bg: '#EDF3EF', text: Colors.secondaryText };
     }
   };
 
@@ -36,14 +36,14 @@ export const Badge: React.FC<BadgeProps> = ({ label, variant = 'neutral' }) => {
 
 const styles = StyleSheet.create({
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 3.5,
+    borderRadius: 12,
     alignSelf: 'flex-start',
   },
   text: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
 });

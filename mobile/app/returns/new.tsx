@@ -10,8 +10,9 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { RotateCcw, AlertTriangle, Check } from 'lucide-react-native';
+import { RotateCcw, AlertTriangle, ArrowLeft } from 'lucide-react-native';
 import { apiClient } from '../../src/api/client';
+import { useLanguage } from '../../src/context/LanguageContext';
 import { Colors, Spacing } from '../../src/theme/colors';
 import { Card } from '../../src/components/Card';
 import { Input } from '../../src/components/Input';
@@ -35,6 +36,7 @@ export default function NewReturnScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { saleId } = useLocalSearchParams<{ saleId: string }>();
+  const { language, t } = useLanguage();
 
   const { data: sale, isLoading } = useQuery({
     queryKey: ['sale-details-for-return', saleId],
@@ -72,7 +74,6 @@ export default function NewReturnScreen() {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
       if (field === 'returnedQty') {
-        // By default, assume all returned quantity is restocked unless marked damaged
         copy[index].restockedQty = value;
         copy[index].damagedQty = '0';
       }
@@ -80,7 +81,6 @@ export default function NewReturnScreen() {
     });
   };
 
-  // Calculate live refund total
   const estimatedRefund = returnItems.reduce((sum, item) => {
     return sum + (Number(item.returnedQty) || 0) * item.unitPrice;
   }, 0);
@@ -95,163 +95,175 @@ export default function NewReturnScreen() {
       queryClient.invalidateQueries({ queryKey: ['products-list'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       Alert.alert(
-        'Return Processed',
-        `Refund of ${formatCurrency(data.data.refundTotal)} recorded and stock restocked.`
+        language === 'te' ? 'రిటర్న్ విజయవంతమైంది' : 'Return Processed',
+        language === 'te'
+          ? `${formatCurrency(data.data.refundTotal)} రీఫండ్ నమోదు చేయబడి, సరుకు స్టాక్‌కి తిరిగి చేర్చబడింది.`
+          : `Refund of ${formatCurrency(data.data.refundTotal)} recorded and stock restocked.`
       );
       router.back();
     },
     onError: (err: any) => {
-      Alert.alert('Return Failed', err.message || 'Unable to process return.');
+      Alert.alert('Error', err.message || 'Failed to process return.');
     },
   });
 
   const handleSubmit = () => {
-    const itemsToReturn = returnItems
-      .filter((i) => (Number(i.returnedQty) || 0) > 0)
-      .map((i) => ({
-        productId: i.productId,
-        returnedQuantity: Number(i.returnedQty),
-        restockedQuantity: Number(i.restockedQty) || 0,
-        damagedQuantity: Number(i.damagedQty) || 0,
-        reason: i.reason,
-      }));
-
-    if (itemsToReturn.length === 0) {
-      Alert.alert('No Items Selected', 'Enter a return quantity > 0 for at least one item.');
+    const activeReturns = returnItems.filter((i) => Number(i.returnedQty) > 0);
+    if (activeReturns.length === 0) {
+      Alert.alert(
+        language === 'te' ? 'సరుకును ఎంచుకోండి' : 'No Items to Return',
+        language === 'te' ? 'కనీసం ఒక సరుకు రిటర్న్ పరిమాణం నమోదు చేయండి.' : 'Enter return quantity for at least one item.'
+      );
       return;
     }
 
-    // Validate restocked + damaged = returned
-    for (const item of itemsToReturn) {
-      if (item.restockedQuantity + item.damagedQuantity !== item.returnedQuantity) {
-        Alert.alert(
-          'Quantity Mismatch',
-          'Restocked quantity + damaged quantity must equal total returned quantity.'
-        );
-        return;
-      }
-    }
-
-    mutation.mutate({
-      items: itemsToReturn,
-      paymentMethod,
+    const payload = {
+      items: activeReturns.map((i) => ({
+        productId: i.productId,
+        quantity: Number(i.returnedQty),
+        restockQuantity: Number(i.restockedQty) || Number(i.returnedQty),
+        damagedQuantity: Number(i.damagedQty) || 0,
+        reason: i.reason.trim() || 'Customer Return',
+      })),
+      refundMethod: paymentMethod,
       notes: generalNotes.trim(),
-    });
-  };
+    };
 
-  if (isLoading || !sale) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading sale for return...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+    mutation.mutate(payload);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.backCircle} onPress={() => router.back()}>
+          <ArrowLeft size={20} color={Colors.darkForest} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {language === 'te' ? 'కస్టమర్ రిటర్న్ ప్రాసెస్' : 'Customer Return'}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Card>
-          <Text style={styles.saleHeader}>Original Sale #{sale.saleNumber}</Text>
-          <Text style={styles.customerText}>
-            Customer: {sale.customerName} • Type: {sale.customerType}
-          </Text>
-          <Text style={styles.totalPaidText}>Total Paid: {formatCurrency(sale.total)}</Text>
+        {/* Sale Header Card */}
+        <Card style={styles.saleHeaderCard}>
+          <View style={styles.saleHeaderTop}>
+            <View>
+              <Text style={styles.saleNumber}>{sale?.saleNumber}</Text>
+              <Text style={styles.customerName}>
+                {sale?.customerName || 'Walk-in'} • {sale?.customerPhone || ''}
+              </Text>
+            </View>
+            <Badge
+              label={sale?.customerType === 'RESELLER' ? t('reseller') : t('retail')}
+              variant={sale?.customerType === 'RESELLER' ? 'reseller' : 'retail'}
+            />
+          </View>
         </Card>
 
-        {/* Return line items */}
-        <Card>
-          <Text style={styles.sectionHeading}>Items to Return</Text>
+        {/* Return Items List */}
+        <Card style={styles.formCard}>
+          <Text style={styles.sectionHeading}>
+            {language === 'te' ? 'రిటర్న్ చేసే సరుకులు' : 'Select Items to Return'}
+          </Text>
 
           {returnItems.map((item, idx) => (
-            <View key={item.productId} style={styles.itemBox}>
-              <View style={styles.itemRow}>
+            <View key={item.productId} style={styles.returnItemBox}>
+              <View style={styles.itemHeader}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemMeta}>
-                  Bought: {item.originalQty} {item.sellingUnit} @ {formatCurrency(item.unitPrice)}
+                  {formatCurrency(item.unitPrice)}/{item.sellingUnit}
                 </Text>
               </View>
+              <Text style={styles.originalSoldText}>
+                {language === 'te' ? 'బిల్లులోని పరిమాణం' : 'Originally billed'}: {item.originalQty} {item.sellingUnit}
+              </Text>
 
-              <View style={styles.inputsRow}>
+              <View style={styles.row}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Input
-                    label="Return Qty"
+                    label={language === 'te' ? 'రిటర్న్ పరిమాణం' : 'Return Qty'}
                     value={item.returnedQty}
                     onChangeText={(val) => updateItem(idx, 'returnedQty', val)}
                     keyboardType="numeric"
-                    helper={`Max: ${item.originalQty}`}
                   />
                 </View>
-
-                <View style={{ flex: 1, marginRight: 8 }}>
+                <View style={{ flex: 1 }}>
                   <Input
-                    label="Restock Qty"
+                    label={language === 'te' ? 'స్టాక్‌కి చేర్చే పరిమాణం' : 'Restock Qty'}
                     value={item.restockedQty}
                     onChangeText={(val) => updateItem(idx, 'restockedQty', val)}
                     keyboardType="numeric"
-                    helper="Back to inventory"
-                  />
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <Input
-                    label="Damaged Qty"
-                    value={item.damagedQty}
-                    onChangeText={(val) => updateItem(idx, 'damagedQty', val)}
-                    keyboardType="numeric"
-                    helper="Discard as loss"
                   />
                 </View>
               </View>
+
+              <Input
+                label={language === 'te' ? 'రిటర్న్ కారణం' : 'Reason'}
+                value={item.reason}
+                onChangeText={(val) => updateItem(idx, 'reason', val)}
+                placeholder="Wrong item, quality issue..."
+              />
             </View>
           ))}
         </Card>
 
-        {/* Refund & Notes Card */}
-        <Card>
-          <Text style={styles.sectionHeading}>Refund Method & Notes</Text>
-          <View style={styles.refundMethodRow}>
-            {(['CASH', 'UPI'] as const).map((method) => (
+        {/* Refund Method & Notes */}
+        <Card style={styles.formCard}>
+          <Text style={styles.sectionHeading}>
+            {language === 'te' ? 'రీఫండ్ చెల్లింపు విధానం' : 'Refund Method'}
+          </Text>
+
+          <View style={styles.methodRow}>
+            {(['CASH', 'UPI'] as const).map((m) => (
               <TouchableOpacity
-                key={method}
-                style={[
-                  styles.refundMethodBtn,
-                  paymentMethod === method && styles.activeRefundBtn,
-                ]}
-                onPress={() => setPaymentMethod(method)}
+                key={m}
+                style={[styles.methodBtn, paymentMethod === m && styles.activeMethodBtn]}
+                onPress={() => setPaymentMethod(m)}
               >
-                <Text
-                  style={[
-                    styles.refundMethodText,
-                    paymentMethod === method && styles.activeRefundText,
-                  ]}
-                >
-                  {method === 'CASH' ? '💵 Cash Refund' : '📱 UPI Refund'}
+                <Text style={[styles.methodText, paymentMethod === m && styles.activeMethodText]}>
+                  {m === 'CASH'
+                    ? language === 'te'
+                      ? '💵 నగదు (Cash)'
+                      : '💵 Cash'
+                    : language === 'te'
+                    ? '📱 యూపీఐ (UPI)'
+                    : '📱 UPI'}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
           <Input
-            label="Return Reason / Remarks"
+            label={language === 'te' ? 'గమనికలు (ఐచ్ఛికం)' : 'Return Notes'}
             value={generalNotes}
             onChangeText={setGeneralNotes}
-            placeholder="e.g. Customer purchased excess quantity"
+            placeholder={language === 'te' ? 'ఉదా. కస్టమర్ ఎక్స్‌చేంజ్ తీసుకున్నారు' : 'e.g. Refunded to customer directly'}
           />
+        </Card>
 
-          <View style={styles.refundTotalBox}>
-            <Text style={styles.refundTotalLabel}>Total Refund Due to Customer:</Text>
-            <Text style={styles.refundTotalVal}>{formatCurrency(estimatedRefund)}</Text>
+        {/* Live Refund Summary */}
+        <Card style={[styles.formCard, styles.summaryCard]}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>
+              {language === 'te' ? 'మొత్తం రీఫండ్ మొత్తం' : 'Total Refund Amount'}
+            </Text>
+            <Text style={styles.summaryVal}>{formatCurrency(estimatedRefund)}</Text>
           </View>
         </Card>
 
         <Button
-          title={mutation.isPending ? 'Processing...' : `Confirm Return & Refund • ${formatCurrency(estimatedRefund)}`}
+          title={
+            mutation.isPending
+              ? language === 'te'
+                ? 'నమోదు అవుతోంది...'
+                : 'Processing Return...'
+              : `${language === 'te' ? 'రిటర్న్ పూర్తి చేయండి' : 'Process Return'} • ${formatCurrency(estimatedRefund)}`
+          }
           onPress={handleSubmit}
           loading={mutation.isPending}
           size="lg"
-          style={{ marginTop: Spacing.sm }}
+          style={styles.confirmBtn}
         />
       </ScrollView>
     </SafeAreaView>
@@ -261,108 +273,147 @@ export default function NewReturnScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.lightMint,
+    backgroundColor: Colors.mintBackground,
   },
-  loadingContainer: {
-    flex: 1,
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 12,
+  },
+  backCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.borders,
   },
-  loadingText: {
-    color: Colors.secondaryText,
-    fontSize: 14,
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: Colors.darkForest,
   },
   scrollContent: {
     padding: Spacing.lg,
     paddingBottom: 40,
   },
-  saleHeader: {
-    fontSize: 16,
-    fontWeight: '800',
+  saleHeaderCard: {
+    borderRadius: 22,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  saleHeaderTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  saleNumber: {
+    fontSize: 17,
+    fontWeight: '900',
     color: Colors.darkForest,
   },
-  customerText: {
-    fontSize: 12,
+  customerName: {
+    fontSize: 12.5,
     color: Colors.secondaryText,
     marginTop: 2,
   },
-  totalPaidText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.primary,
-    marginTop: 4,
+  formCard: {
+    borderRadius: 22,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   sectionHeading: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.darkForest,
     marginBottom: Spacing.md,
   },
-  itemBox: {
-    backgroundColor: Colors.surfaceLight,
+  returnItemBox: {
+    backgroundColor: '#FAFDFB',
+    borderRadius: 18,
     padding: 12,
-    borderRadius: 12,
-    marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.borders,
+    borderColor: '#E6EFE9',
+    marginBottom: Spacing.md,
   },
-  itemRow: {
-    marginBottom: 8,
+  itemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   itemName: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.darkForest,
+    flex: 1,
   },
   itemMeta: {
     fontSize: 12,
+    fontWeight: '700',
+    color: Colors.secondaryText,
+  },
+  originalSoldText: {
+    fontSize: 11.5,
     color: Colors.secondaryText,
     marginTop: 2,
+    marginBottom: 8,
   },
-  inputsRow: {
+  row: {
     flexDirection: 'row',
   },
-  refundMethodRow: {
+  methodRow: {
     flexDirection: 'row',
     gap: 8,
     marginBottom: Spacing.md,
   },
-  refundMethodBtn: {
+  methodBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: Colors.veryLightMint,
+    borderRadius: 16,
+    backgroundColor: '#F3F8F5',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.borders,
+    borderColor: '#E6EFE9',
   },
-  activeRefundBtn: {
-    backgroundColor: Colors.darkForest,
+  activeMethodBtn: {
+    backgroundColor: '#CEE8D8',
+    borderColor: Colors.primary,
   },
-  refundMethodText: {
-    fontSize: 12,
+  methodText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: Colors.secondaryText,
+  },
+  activeMethodText: {
+    color: Colors.darkForest,
+    fontWeight: '800',
+  },
+  summaryCard: {
+    backgroundColor: '#F3F9F5',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryLabel: {
+    fontSize: 14,
     fontWeight: '700',
     color: Colors.darkForest,
   },
-  activeRefundText: {
-    color: Colors.white,
+  summaryVal: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: Colors.primary,
   },
-  refundTotalBox: {
-    backgroundColor: '#FEF4E5',
-    padding: 12,
-    borderRadius: 10,
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  refundTotalLabel: {
-    fontSize: 12,
-    color: '#8A5306',
-    fontWeight: '600',
-  },
-  refundTotalVal: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#A2591F',
-    marginTop: 2,
+  confirmBtn: {
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    marginTop: Spacing.xs,
   },
 });

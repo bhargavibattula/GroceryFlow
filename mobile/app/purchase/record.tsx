@@ -10,8 +10,9 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Truck, Check } from 'lucide-react-native';
+import { Plus, Trash2, Truck, ArrowLeft, Sparkles, Package } from 'lucide-react-native';
 import { apiClient } from '../../src/api/client';
+import { useLanguage } from '../../src/context/LanguageContext';
 import { Colors, Spacing } from '../../src/theme/colors';
 import { Card } from '../../src/components/Card';
 import { Input } from '../../src/components/Input';
@@ -31,6 +32,7 @@ interface PurchaseLine {
 export default function RecordPurchaseScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { language, t } = useLanguage();
 
   const [invoiceNumber, setInvoiceNumber] = useState(`INV-${Date.now().toString().slice(-6)}`);
   const [supplierId, setSupplierId] = useState('');
@@ -108,7 +110,10 @@ export default function RecordPurchaseScreen() {
 
   const removeLine = (index: number) => {
     if (lines.length <= 1) {
-      Alert.alert('Required', 'A purchase must have at least one line item.');
+      Alert.alert(
+        language === 'te' ? 'అవసరం' : 'Required',
+        language === 'te' ? 'కనీసం ఒక సరుకు ఉండాలి.' : 'A purchase must have at least one line item.'
+      );
       return;
     }
     setLines((prev) => prev.filter((_, idx) => idx !== index));
@@ -132,7 +137,12 @@ export default function RecordPurchaseScreen() {
       queryClient.invalidateQueries({ queryKey: ['products-list'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       queryClient.invalidateQueries({ queryKey: ['purchases-list'] });
-      Alert.alert('Purchase Recorded', 'Stock increased and landed batch costs recorded.');
+      Alert.alert(
+        language === 'te' ? 'కొనుగోలు విజయవంతమైంది' : 'Purchase Recorded',
+        language === 'te'
+          ? 'సరుకు స్టాక్ మరియు ల్యాండెడ్ బ్యాచ్ కాస్ట్ నమోదు చేయబడ్డాయి.'
+          : 'Stock increased and landed batch costs recorded.'
+      );
       router.back();
     },
     onError: (err: any) => {
@@ -142,7 +152,12 @@ export default function RecordPurchaseScreen() {
 
   const handleSubmit = () => {
     if (!invoiceNumber.trim() || lines.length === 0) {
-      Alert.alert('Validation Error', 'Invoice number and product lines are required.');
+      Alert.alert(
+        'Validation Error',
+        language === 'te'
+          ? 'ఇన్వాయిస్ నంబర్ మరియు సరుకులు అవసరం.'
+          : 'Invoice number and product lines are required.'
+      );
       return;
     }
 
@@ -171,18 +186,31 @@ export default function RecordPurchaseScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.backCircle} onPress={() => router.back()}>
+          <ArrowLeft size={20} color={Colors.darkForest} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {language === 'te' ? 'హోల్‌సేల్ కొనుగోలు నమోదు' : 'Record Bulk Purchase'}
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Invoice & Supplier Header */}
-        <Card>
-          <Text style={styles.sectionHeading}>Purchase & Supplier Details</Text>
+        <Card style={styles.formCard}>
+          <Text style={styles.sectionHeading}>
+            {language === 'te' ? 'ఇన్వాయిస్ & సప్లయర్ వివరాలు' : 'Purchase & Supplier Details'}
+          </Text>
+
           <Input
-            label="Invoice / Bill Reference Number *"
+            label={language === 'te' ? 'ఇన్వాయిస్ / బిల్లు నంబర్' : 'Invoice Reference Number'}
             value={invoiceNumber}
             onChangeText={setInvoiceNumber}
-            placeholder="e.g. INV-2026-0042"
+            placeholder="INV-2026-0042"
           />
 
-          <Text style={styles.inputLabel}>Select Supplier</Text>
+          <Text style={styles.inputLabel}>{language === 'te' ? 'సప్లయర్‌ను ఎంచుకోండి' : 'Select Supplier'}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.supplierScroll}>
             {suppliers.map((s: any) => (
               <TouchableOpacity
@@ -207,19 +235,22 @@ export default function RecordPurchaseScreen() {
         </Card>
 
         {/* Line Items */}
-        <Card>
+        <Card style={styles.formCard}>
           <View style={styles.linesHeader}>
-            <Text style={styles.sectionHeading}>Purchased Products ({lines.length})</Text>
+            <Text style={styles.sectionHeading}>
+              {language === 'te' ? 'కొనుగోలు చేసిన సరుకులు' : 'Purchased Products'} ({lines.length})
+            </Text>
             <TouchableOpacity onPress={addLine} style={styles.addLineBtn}>
-              <Plus size={16} color={Colors.primary} />
-              <Text style={styles.addLineText}>Add Line</Text>
+              <Plus size={15} color={Colors.white} />
+              <Text style={styles.addLineText}>
+                {language === 'te' ? 'సరుకు చేర్చు' : 'Add Item'}
+              </Text>
             </TouchableOpacity>
           </View>
 
           {lines.map((line, idx) => {
             const lineSub = (Number(line.quantity) || 0) * (Number(line.unitPurchaseCost) || 0);
             const totalBaseQty = (Number(line.quantity) || 0) * (Number(line.conversionFactor) || 1);
-            // Proportional expense preview
             const lineProp = subtotal > 0 ? lineSub / subtotal : 0;
             const allocatedExp = additionalExpenses * lineProp;
             const landedCostPerBase =
@@ -228,14 +259,16 @@ export default function RecordPurchaseScreen() {
             return (
               <View key={idx} style={styles.lineCard}>
                 <View style={styles.lineTop}>
-                  <Text style={styles.lineIndex}>Line #{idx + 1}</Text>
-                  <TouchableOpacity onPress={() => removeLine(idx)}>
+                  <Text style={styles.lineIndex}>#{idx + 1} {line.productName}</Text>
+                  <TouchableOpacity onPress={() => removeLine(idx)} style={styles.deleteIconBtn}>
                     <Trash2 size={16} color={Colors.error} />
                   </TouchableOpacity>
                 </View>
 
                 {/* Product Selector */}
-                <Text style={styles.inputLabel}>Product</Text>
+                <Text style={styles.inputLabel}>
+                  {language === 'te' ? 'సరుకు ఎంపిక' : 'Product'}
+                </Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.productSelectScroll}>
                   {products.map((p: any) => (
                     <TouchableOpacity
@@ -261,7 +294,7 @@ export default function RecordPurchaseScreen() {
                 <View style={styles.row}>
                   <View style={{ flex: 1, marginRight: 8 }}>
                     <Input
-                      label="Qty Purchased"
+                      label={language === 'te' ? 'కొనుగోలు పరిమాణం' : 'Qty Purchased'}
                       value={line.quantity}
                       onChangeText={(val) => updateLine(idx, 'quantity', val)}
                       keyboardType="numeric"
@@ -269,10 +302,10 @@ export default function RecordPurchaseScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Input
-                      label="Purchase Unit"
+                      label={language === 'te' ? 'యూనిట్ పేరు' : 'Purchase Unit'}
                       value={line.purchaseUnit}
                       onChangeText={(val) => updateLine(idx, 'purchaseUnit', val)}
-                      placeholder="e.g. 50kg Bag"
+                      placeholder="50kg Bag"
                     />
                   </View>
                 </View>
@@ -280,16 +313,16 @@ export default function RecordPurchaseScreen() {
                 <View style={styles.row}>
                   <View style={{ flex: 1, marginRight: 8 }}>
                     <Input
-                      label="Units per Pack (Conv.)"
+                      label={language === 'te' ? 'యూనిట్‌కి ఎన్ని కేజీలు/లీటర్లు' : 'Units per Pack (Conv.)'}
                       value={line.conversionFactor}
                       onChangeText={(val) => updateLine(idx, 'conversionFactor', val)}
                       keyboardType="numeric"
-                      helper={`Total: ${totalBaseQty} base units`}
+                      helper={`Total: ${totalBaseQty} units`}
                     />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Input
-                      label="Price Per Unit (₹)"
+                      label={language === 'te' ? 'ధర (₹)' : 'Price Per Unit (₹)'}
                       value={line.unitPurchaseCost}
                       onChangeText={(val) => updateLine(idx, 'unitPurchaseCost', val)}
                       keyboardType="numeric"
@@ -300,7 +333,11 @@ export default function RecordPurchaseScreen() {
                 {/* Landed cost preview badge */}
                 <View style={styles.landedPreviewBox}>
                   <Text style={styles.landedPreviewText}>
-                    Est. Landed Cost: {formatCurrency(landedCostPerBase)}/base unit (includes allocated transport)
+                    {language === 'te' ? 'అంచనా ల్యాండెడ్ కాస్ట్' : 'Est. Landed Cost'}:{' '}
+                    <Text style={{ fontWeight: '900', color: Colors.primary }}>
+                      {formatCurrency(landedCostPerBase)}/unit
+                    </Text>{' '}
+                    ({language === 'te' ? 'రవాణా ఖర్చుతో కలిపి' : 'includes transport'})
                   </Text>
                 </View>
               </View>
@@ -309,21 +346,23 @@ export default function RecordPurchaseScreen() {
         </Card>
 
         {/* Transportation & Shared Expenses */}
-        <Card>
+        <Card style={styles.formCard}>
           <View style={styles.cardHeader}>
             <Truck size={18} color={Colors.primary} />
             <Text style={[styles.sectionHeading, { marginBottom: 0, marginLeft: 8 }]}>
-              Additional Transport & Loading
+              {language === 'te' ? 'రవాణా & హమాలీ ఖర్చులు' : 'Transport & Loading Costs'}
             </Text>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Allocated proportionally across line items to compute true landed cost
+            {language === 'te'
+              ? 'ఈ ఖర్చులు సరుకుల ల్యాండెడ్ కాస్ట్‌కు నేరుగా జోడించబడతాయి'
+              : 'Allocated proportionally across line items to compute true landed cost'}
           </Text>
 
           <View style={styles.row}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Input
-                label="Transportation / Freight (₹)"
+                label={language === 'te' ? 'రవాణా / లారీ అద్దె (₹)' : 'Transportation (₹)'}
                 value={transportation}
                 onChangeText={setTransportation}
                 keyboardType="numeric"
@@ -331,7 +370,7 @@ export default function RecordPurchaseScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Input
-                label="Loading / Labor (₹)"
+                label={language === 'te' ? 'హమాలీ ఖర్చు (₹)' : 'Loading / Labor (₹)'}
                 value={loadingCost}
                 onChangeText={setLoadingCost}
                 keyboardType="numeric"
@@ -341,29 +380,37 @@ export default function RecordPurchaseScreen() {
         </Card>
 
         {/* Cost Summary Breakdown */}
-        <Card style={styles.summaryCard}>
+        <Card style={[styles.formCard, styles.summaryCard]}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Line Items Subtotal</Text>
+            <Text style={styles.summaryLabel}>{language === 'te' ? 'సరుకుల మొత్తం' : 'Items Subtotal'}</Text>
             <Text style={styles.summaryVal}>{formatCurrency(subtotal)}</Text>
           </View>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Freight & Expenses</Text>
+            <Text style={styles.summaryLabel}>{language === 'te' ? 'రవాణా ఖర్చులు' : 'Freight & Labor'}</Text>
             <Text style={styles.summaryVal}>+{formatCurrency(additionalExpenses)}</Text>
           </View>
 
           <View style={[styles.summaryRow, styles.grandTotalRow]}>
-            <Text style={styles.grandLabel}>Net Acquisition Cost</Text>
+            <Text style={styles.grandLabel}>{language === 'te' ? 'మొత్తం కొనుగోలు వ్యయం' : 'Net Total Cost'}</Text>
             <Text style={styles.grandVal}>{formatCurrency(grandTotal)}</Text>
           </View>
         </Card>
 
         <Button
-          title={mutation.isPending ? 'Recording Purchase...' : 'Confirm Bulk Purchase'}
+          title={
+            mutation.isPending
+              ? language === 'te'
+                ? 'నమోదు అవుతోంది...'
+                : 'Recording Purchase...'
+              : language === 'te'
+              ? 'హోల్‌సేల్ కొనుగోలు ఖరారు చేయండి'
+              : 'Confirm Bulk Purchase'
+          }
           onPress={handleSubmit}
           loading={mutation.isPending}
           size="lg"
-          style={{ marginTop: Spacing.sm }}
+          style={styles.confirmBtn}
         />
       </ScrollView>
     </SafeAreaView>
@@ -373,15 +420,42 @@ export default function RecordPurchaseScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.lightMint,
+    backgroundColor: Colors.mintBackground,
+  },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 12,
+  },
+  backCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.borders,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: Colors.darkForest,
   },
   scrollContent: {
     padding: Spacing.lg,
     paddingBottom: 40,
   },
+  formCard: {
+    borderRadius: 22,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
   sectionHeading: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.darkForest,
     marginBottom: Spacing.md,
   },
@@ -397,57 +471,62 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.darkForest,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   supplierScroll: {
     marginBottom: Spacing.md,
   },
   supplierChip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: Colors.veryLightMint,
+    borderRadius: 16,
+    backgroundColor: '#F3F8F5',
     marginRight: 8,
     borderWidth: 1,
-    borderColor: Colors.borders,
+    borderColor: '#E6EFE9',
   },
   activeSupplierChip: {
-    backgroundColor: Colors.darkForest,
-    borderColor: Colors.darkForest,
+    backgroundColor: '#EAF7EE',
+    borderColor: Colors.primary,
   },
   supplierChipText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: Colors.darkForest,
+    fontWeight: '700',
+    color: Colors.secondaryText,
   },
   activeSupplierChipText: {
-    color: Colors.white,
+    color: Colors.darkForest,
+    fontWeight: '800',
   },
   linesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   addLineBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
     gap: 4,
   },
   addLineText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.white,
   },
   lineCard: {
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: 14,
+    backgroundColor: '#FAFDFB',
+    borderRadius: 18,
     padding: 12,
-    marginBottom: 12,
     borderWidth: 1,
-    borderColor: Colors.borders,
+    borderColor: '#E6EFE9',
+    marginBottom: Spacing.md,
   },
   lineTop: {
     flexDirection: 'row',
@@ -457,41 +536,44 @@ const styles = StyleSheet.create({
   },
   lineIndex: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.darkForest,
   },
+  deleteIconBtn: {
+    padding: 4,
+  },
   productSelectScroll: {
-    marginBottom: 10,
+    marginBottom: Spacing.sm,
   },
   productChip: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 12,
     backgroundColor: Colors.white,
     marginRight: 6,
     borderWidth: 1,
-    borderColor: Colors.borders,
+    borderColor: '#E6EFE9',
   },
   activeProductChip: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#E4F4EB',
     borderColor: Colors.primary,
   },
   productChipText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.darkForest,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: Colors.secondaryText,
   },
   activeProductChipText: {
-    color: Colors.white,
+    color: Colors.darkForest,
   },
   row: {
     flexDirection: 'row',
   },
   landedPreviewBox: {
-    backgroundColor: '#EAF5EE',
+    backgroundColor: '#EAF7EE',
+    borderRadius: 12,
     padding: 8,
-    borderRadius: 8,
-    marginTop: 6,
+    marginTop: 4,
   },
   landedPreviewText: {
     fontSize: 11,
@@ -499,37 +581,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   summaryCard: {
-    backgroundColor: '#F3FAF5',
-    borderColor: '#CDE5D6',
+    backgroundColor: '#F3F9F5',
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   summaryLabel: {
     fontSize: 13,
     color: Colors.secondaryText,
+    fontWeight: '600',
   },
   summaryVal: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '800',
     color: Colors.darkForest,
   },
   grandTotalRow: {
     borderTopWidth: 1,
-    borderTopColor: '#CDE5D6',
-    paddingTop: 8,
+    borderTopColor: '#DCE8E1',
+    paddingTop: 10,
     marginTop: 4,
   },
   grandLabel: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '900',
     color: Colors.darkForest,
   },
   grandVal: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
     color: Colors.primary,
+  },
+  confirmBtn: {
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    marginTop: Spacing.xs,
   },
 });

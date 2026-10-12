@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Spacing } from '../theme/colors';
+import { Colors } from '../theme/colors';
 import { formatCurrency } from '../utils/format';
+import { useLanguage } from '../context/LanguageContext';
 
 interface PriceTagProps {
   resellerPrice: number;
@@ -16,6 +17,8 @@ export const PriceTag: React.FC<PriceTagProps> = ({
   selectedPriceType,
   unit,
 }) => {
+  const { language } = useLanguage();
+
   return (
     <View style={styles.container}>
       <View
@@ -24,7 +27,9 @@ export const PriceTag: React.FC<PriceTagProps> = ({
           selectedPriceType === 'RESELLER' && styles.highlightReseller,
         ]}
       >
-        <Text style={styles.label}>Reseller</Text>
+        <Text style={styles.label}>
+          {language === 'te' ? 'హోల్‌సేల్' : 'Wholesale'}
+        </Text>
         <Text style={styles.priceText}>
           {formatCurrency(resellerPrice)}
           {unit ? <Text style={styles.unitText}>/{unit}</Text> : null}
@@ -39,7 +44,9 @@ export const PriceTag: React.FC<PriceTagProps> = ({
           selectedPriceType === 'RETAIL' && styles.highlightRetail,
         ]}
       >
-        <Text style={styles.label}>Retail</Text>
+        <Text style={styles.label}>
+          {language === 'te' ? 'రిటైల్' : 'Retail'}
+        </Text>
         <Text style={styles.priceText}>
           {formatCurrency(retailPrice)}
           {unit ? <Text style={styles.unitText}>/{unit}</Text> : null}
@@ -53,42 +60,44 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.veryLightMint,
-    borderRadius: 12,
-    paddingVertical: 6,
+    backgroundColor: '#FFFFFFCC',
+    borderRadius: 16,
+    paddingVertical: 5,
     paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: '#E6EFE9',
   },
   priceBlock: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 10,
   },
   highlightReseller: {
-    backgroundColor: '#CEE8D8',
+    backgroundColor: '#E4F4EB',
   },
   highlightRetail: {
-    backgroundColor: '#FDEEE0',
+    backgroundColor: '#FDF1E6',
   },
   label: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9.5,
+    fontWeight: '800',
     color: Colors.secondaryText,
-    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   priceText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13.5,
+    fontWeight: '800',
     color: Colors.darkForest,
   },
   unitText: {
-    fontSize: 11,
-    fontWeight: '400',
+    fontSize: 10.5,
+    fontWeight: '500',
     color: Colors.secondaryText,
   },
   divider: {
     width: 1,
-    height: '75%',
-    backgroundColor: Colors.borders,
+    height: '70%',
+    backgroundColor: '#E6EFE9',
     marginHorizontal: 4,
   },
 });
