@@ -21,8 +21,8 @@ export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
 
-  const [identifier, setIdentifier] = useState('owner');
-  const [password, setPassword] = useState('password123');
+  const [identifier, setIdentifier] = useState('bhargavitej');
+  const [password, setPassword] = useState('Bhargavi@123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -44,9 +44,14 @@ export default function LoginScreen() {
     }
   };
 
-  const handleQuickFill = (user: 'owner' | 'sales') => {
-    setIdentifier(user);
-    setPassword('password123');
+  const handleQuickFill = (user: 'bhargavi' | 'owner' | 'sales') => {
+    if (user === 'bhargavi') {
+      setIdentifier('bhargavitej');
+      setPassword('Bhargavi@123');
+    } else {
+      setIdentifier(user);
+      setPassword('password123');
+    }
     setError('');
   };
 
@@ -103,10 +108,10 @@ export default function LoginScreen() {
               <Text style={styles.quickFillLabel}>Demo Accounts (Single-Tap Fill):</Text>
               <View style={styles.quickFillButtons}>
                 <Button
-                  title="👑 Owner (Father)"
-                  variant={identifier === 'owner' ? 'secondary' : 'outline'}
+                  title="👑 Bhargavi (Owner)"
+                  variant={identifier === 'bhargavitej' ? 'secondary' : 'outline'}
                   size="sm"
-                  onPress={() => handleQuickFill('owner')}
+                  onPress={() => handleQuickFill('bhargavi')}
                   style={styles.quickBtn}
                 />
                 <Button
